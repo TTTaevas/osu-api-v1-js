@@ -44,6 +44,7 @@ class Game {
 					s[keys[i]] = Number(values[i])
 				}
 			}
+			return s
 		})
 	}
 

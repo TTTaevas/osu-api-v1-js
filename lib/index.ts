@@ -5,6 +5,8 @@ import { Beatmap } from "./beatmap"
 import { Match } from "./match"
 import { Mods, ModsShort } from "./mods"
 
+export {User, Score, Beatmap, Match, Mods, ModsShort}
+
 export class API {
 	key: string
 	verbose: boolean
