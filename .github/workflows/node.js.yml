@@ -19,8 +19,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Create env file
-        run: |
-          echo KEY=${{ secrets.KEY }} >> .env
+        run: echo KEY=${{ secrets.KEY }} >> .env
 
     - name: Install dependencies
         uses: borales/actions-yarn@v4
