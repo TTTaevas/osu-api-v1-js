@@ -1,12 +1,29 @@
 import "dotenv/config"
+import { adjustBeatmapStatsToMods } from "./beatmap"
 import * as osu from "./index"
+import { getMods } from "./index"
 
 const key = process.env.KEY
 if (key === undefined) {throw new Error("The API key has not been defined in the environment variables! (name of the variable is `KEY`)")}
 const api = new osu.API(key, true)
 const bad_id = -1
 
+// shamelessly copied from https://stackoverflow.com/a/15762794
+function roundTo(n: number, digits: number) {
+	let negative = false
+	if (n < 0) {
+		negative = true
+		n *= -1
+	}
+	let multiplicator = Math.pow(10, digits)
+	n = parseFloat((n * multiplicator).toFixed(11))
+	let x = (Math.round(n) / multiplicator).toFixed(digits)
+	if (negative) {x = (n * -1).toFixed(digits)}
+	return Number(x)
+}
+
 const test: () => Promise<void> = async () => {
+	// Check if getUser() works fine
 	console.log("\nTesting: getUser()")
 	const user_id = 7276846
 	let u1 = await api.getUser({user_id}, 0)
@@ -21,6 +38,7 @@ const test: () => Promise<void> = async () => {
 	await api.getUser({user_id: bad_id}, 3)
 	await api.getUser({user_id: bad_id}, bad_id)
 
+	// Check if getMatch() works fine
 	console.log("\nTesting: getMatch()")
 	const match_name = "IT: (tout le monde) vs (Adéquat feur)"
 	let m1 = await api.getMatch(106369699)
@@ -34,6 +52,7 @@ const test: () => Promise<void> = async () => {
 	}
 	await api.getMatch(bad_id)
 
+	// Check if getBeatmap() works fine
 	console.log("\nTesting: getBeatmap()")
 	const song_name = "FriendZoned"
 	let b1 = await api.getBeatmap(m1.games[1].beatmap_id, 0)
@@ -48,9 +67,32 @@ const test: () => Promise<void> = async () => {
 	await api.getBeatmap(bad_id, 3)
 	await api.getBeatmap(bad_id, bad_id)
 
-	// TODO: Check beatmap stats when mods are active
+	let b2 = await api.getBeatmap(2592029, osu.Mods.NoFail)
+	if (b2 instanceof osu.APIError) {throw new Error(`Got an APIError: ${b2.message}`)}
+	testBeatmapWithMods(b2, osu.Mods.DoubleTime, {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})
+	testBeatmapWithMods(b2, osu.Mods.HalfTime, {bpm: 147, cs: 3, ar: 5, od: 3.56, hp: 4})
+	testBeatmapWithMods(b2, osu.Mods.Easy, {bpm: 196, cs: 1.5, ar: 3.5, od: 3, hp: 2})
+	testBeatmapWithMods(b2, osu.Mods.HardRock, {bpm: 196, cs: 3.90, ar: 9.8, od: 8.4, hp: 5.6})
+	// TODO: Test when multiple mods are active
 
 	console.log("\nLooks like the test went well!")
+}
+
+const testBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods, expected: object) => {
+	let bm = adjustBeatmapStatsToMods(Object.assign({}, b), mods)
+	let stats = {
+		bpm: roundTo(bm.bpm, 2),
+		cs: roundTo(bm.diff_size, 2),
+		ar: roundTo(bm.diff_approach, 2),
+		od: roundTo(bm.diff_overall, 2),
+		hp: roundTo(bm.diff_drain, 2)
+	}
+	if (JSON.stringify(stats) !== JSON.stringify(expected)) {
+		console.log("Expected", expected, "but got", stats)
+		throw new Error(`The beatmap's stats with the mods ${getMods(mods, "long")} are not what they should be!`)
+	} else {
+		console.log(getMods(mods, "long"), "seem to be well supported by Beatmaps!")
+	}
 }
 
 test()

@@ -96,7 +96,7 @@ export interface Beatmap {
 }
 
 export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
-	const arr = getMods(mods, "long")
+	const arr = getMods(mods, "short")
 	const convertARtoMS = (ar: number) => {
 		ar *= 10
 		let ms = 1800 // AR 0's ms
