@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosResponse } from "axios"
 import { User } from "./user"
 import { Score } from "./score"
-import { Beatmap } from "./beatmap"
+import { adjustBeatmapStatsToMods, Beatmap } from "./beatmap"
 import { Match } from "./match"
 import { Mods, ModsShort } from "./mods"
 
@@ -113,11 +113,6 @@ export class API {
 		try {
 			let response = await this.request("get_beatmaps", `b=${diff_id}&mods=${mods}`)
 			response = response[0]
-			if (getMods(mods, "short").includes("DT")) {
-				response.total_length /= (3/2)
-				response.hit_length /= (3/2)
-				response.bpm *= (3/2)
-			}
 			beatmap = new Beatmap(response)
 			success = true
 		}
@@ -126,7 +121,7 @@ export class API {
 			success = false
 		}
 	
-		return success ? beatmap! : new Beatmap({})
+		return success ? adjustBeatmapStatsToMods(beatmap!, mods) : new Beatmap({})
 	}
 
 	/**

@@ -1,3 +1,51 @@
+import { getMods } from "."
+import { Mods, ModsShort } from "./mods"
+
+export enum Categories {
+	graveyard = -2,
+	WIP  			= -1,
+	pending 	= 0,
+	ranked  	= 1,
+	approved 	= 2,
+	qualified = 3,
+}
+
+export enum Genres {
+	any 				 = 0,
+	unspecified  = 1,
+	"video game" = 2,
+	anime 			 = 3,
+	rock 				 = 4,
+	pop 				 = 5,
+	other 			 = 6,
+	novelty 		 = 7,
+	"" 					 = 8,
+	"hip hop" 	 = 9,
+	electronic 	 = 10,
+	metal 			 = 11,
+	classical 	 = 12,
+	folk 				 = 13,
+	jazz 				 = 14,
+}
+
+export enum Languages {
+	any 				 = 0,
+	unspecified  = 1,
+	english 		 = 2,
+	japanese 		 = 3,
+	chinese 		 = 4,
+	instrumental = 5,
+	korean 			 = 6,
+	french 			 = 7,
+	german 			 = 8,
+	swedish 		 = 9,
+	spanish 		 = 10,
+	italian 		 = 11,
+	russian 		 = 12,
+	polish 			 = 13,
+	other 			 = 14,
+}
+
 export class Beatmap {
 	beatmapset_id: number
 	beatmap_id: number
@@ -106,10 +154,38 @@ export class Beatmap {
 		return `${m}:${s}`
 	}
 
-	getGenre(): string {
-		return ["any", "unspecified", "video game", "anime",
-		"rock", "pop", "other", "novelty",
-		"??", "hip hop", "electronic", "metal",
-		"classical", "folk", "jazz"][this.genre_id]
+	getCategory(): string {return Categories[this.approved]}
+	getGenre(): string {return Genres[this.genre_id]}
+	getLanguage(): string {return Languages[this.language_id]}
+}
+
+export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods?: Mods | ModsShort) => Beatmap = (beatmap: Beatmap, mods?: Mods | ModsShort) => {
+	if (mods === undefined) {mods = 0}
+	const arr = getMods(mods, "short")
+	const convertARtoMS = (ar: number) => {
+		ar *= 10
+		let ms = 1800 // AR 0's ms
+		for (let i = 0; i < ar; i++) {ms -= i >= 50 ? 15 : 12}
+		return ms
 	}
+
+	if (arr.includes("DT")) {
+		beatmap.total_length /= 1.5
+		beatmap.hit_length /= 1.5
+		beatmap.bpm *= 1.5
+		beatmap.diff_approach = (1950 - (convertARtoMS(beatmap.diff_approach) / 1.5)) / 150
+		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 1.5)) / 6
+	}
+
+	if (arr.includes("HT")) {
+		beatmap.total_length /= 0.75
+		beatmap.hit_length /= 0.75
+		beatmap.bpm *= 0.75
+		beatmap.diff_approach = beatmap.diff_approach > 7 ? 
+		(1950 - (convertARtoMS(beatmap.diff_approach) / 0.75)) / 150 :
+		(1800 - (convertARtoMS(beatmap.diff_approach) / 0.75)) / 120 // :skull:
+		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 0.75)) / 6
+	}
+
+	return beatmap
 }
