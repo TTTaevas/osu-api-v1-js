@@ -1,11 +1,37 @@
 import axios, { AxiosError, AxiosResponse } from "axios"
 import { User } from "./user"
 import { Score } from "./score"
-import { adjustBeatmapStatsToMods, Beatmap } from "./beatmap"
+import { adjustBeatmapStatsToMods, Beatmap, Categories, Genres, Languages } from "./beatmap"
 import { Match } from "./match"
 import { Mods, ModsShort } from "./mods"
 
+function correctType(x: any): any {
+	if (!isNaN(x)) {
+		return Number(x)
+	} else if (/[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/.test(x)) {
+		return new Date(x + "Z")
+	} else if (Array.isArray(x)) {
+		return x.map((e) => correctType(e))
+	} else if (typeof x === "object" && x !== null) {
+		const k = Object.keys(x)
+		const v = Object.values(x)
+		for (let i = 0; i < k.length; i++) {
+			x[k[i]] = correctType(v[i])
+		}
+		return x
+	} else {
+		return x
+	}
+}
+
 export {User, Score, Beatmap, Match, Mods, ModsShort}
+
+export class APIError {
+	message: string
+	constructor(m: string) {
+		this.message = m
+	}
+}
 
 export class API {
 	key: string
@@ -67,16 +93,17 @@ export class API {
 	}
 
 	/**
-	 * @param search An Object with either a `user_id` or a `username`
+	 * @param search An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param mode The User's gamemode; 0: osu!, 1: taiko, 2: ctb, 3: mania
 	 * @returns A Promise with a User found with the search
 	 */
-	async getUser(search: {user_id?: number, username?: string} | User, mode: number): Promise<User> {
-		if (!search.user_id && !search.username) {return new User({})}
+	async getUser(search: {user_id?: number, username?: string} | User, mode: number): Promise<User | APIError> {
+		if (!search.user_id && !search.username) {return new APIError("No proper `search` argument was given")}
 		let type = search.user_id ? "id" : "string"
 	
 		let response = await this.request("get_user", `u=${type == "id" ? search.user_id : search.username}&type=${type}&m=${mode}`)
-		return new User(response ? response[0] : {})
+		if (!response[0]) {return new APIError(`No User could be found (user_id: ${search.user_id} | username: ${search.username})`)}
+		return correctType(response[0]) as User
 	}
 
 	/**
@@ -86,14 +113,15 @@ export class API {
 	 * @param limit The maximum number of scores to get, cannot exceed 100
 	 * @returns A Promise with an array of Scores set by the User in a specific mode
 	 */
-	async getUserScores(user: {user_id?: number, username?: string} | User, mode: number, plays: "best" | "recent", limit?: number): Promise<Score[]> {
+	async getUserScores(user: {user_id?: number, username?: string} | User, mode: number, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
-		if (!user.user_id && !user.username) {return scores}
+		if (!user.user_id && !user.username) {return new APIError("No proper `search` argument was given")}
 		let type = user.user_id ? "id" : "string"
 	
 		let response = await this.request(`get_user_${plays}`, `u=${type == "id" ? user.user_id : user.username}&type=${type}&m=${mode}&limit=${limit || 5}`)
-		if (response) response.forEach((s: Object) => scores.push(new Score(s)))
+		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
+		if (!scores.length) {return new APIError(`No Score could be found (user_id: ${user.user_id} | username: ${user.username})`)}
 	
 		return scores
 	}
@@ -103,25 +131,30 @@ export class API {
 	 * @param mods A number representing the mods to apply
 	 * @returns A Promise with a Beatmap
 	 */
-	async getBeatmap(diff_id: number, mods: Mods): Promise<Beatmap> {
-		let success: boolean
-		let beatmap: Beatmap
-	
-		let unsupported_mods = [8, 32] // API returns some stuff as 0/null if any of those mods are included
+	async getBeatmap(diff_id: number, mods: Mods): Promise<Beatmap | APIError> {
+		const unsupported_mods = [8, 32] // API returns some stuff as 0/null if any of those mods are included
 		unsupported_mods.forEach((mod) => getMods(mods, "long").includes(Mods[mod]) ? mods -= mod : mods -= 0)
 	
-		try {
-			let response = await this.request("get_beatmaps", `b=${diff_id}&mods=${mods}`)
-			response = response[0]
-			beatmap = new Beatmap(response)
-			success = true
+		let response = await this.request("get_beatmaps", `b=${diff_id}&mods=${mods}`)
+		if (!response[0]) {return new APIError(`No Beatmap could be found (diff_id: ${diff_id})`)}
+		let beatmap: Beatmap = adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
+
+		beatmap.getLength = (type: "hit" | "total") => {
+			let length = type === "hit" ? beatmap.hit_length : beatmap.total_length
+			let m: number = 0
+			let s: string | number = 0
+			
+			while (length >= 60) {m += 1; length -= 60}
+			while (length >= 1) {s += 1; length -= 1}
+			if (s < 10) {s = `0${s}`}
+			
+			return `${m}:${s}`
 		}
-		catch (e) {
-			console.log(e)
-			success = false
-		}
-	
-		return success ? adjustBeatmapStatsToMods(beatmap!, mods) : new Beatmap({})
+		beatmap.getCategory = () => {return Categories[beatmap.approved]}
+		beatmap.getGenre = () => {return Genres[beatmap.genre_id]}
+		beatmap.getLanguage = () => {return Languages[beatmap.language_id]}
+
+		return beatmap
 	}
 
 	/**
@@ -132,7 +165,7 @@ export class API {
 	 * @param limit The maximum number of scores to get, cannot exceed 100
 	 * @returns A Promise with an array of Scores set on a beatmap
 	 */
-	async getBeatmapScores(diff_id: number, mode: number, user?: {user_id?: number, username?: string} | User, mods?: ModsShort, limit?: number): Promise<Score[]> {
+	async getBeatmapScores(diff_id: number, mode: number, user?: {user_id?: number, username?: string} | User, mods?: ModsShort, limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
 		if (user && !user.user_id && !user.username) {return scores}
@@ -140,7 +173,8 @@ export class API {
 	
 		let response = await this.request("get_scores", `b=${diff_id}&m=${mode}${type ? type == "id" ? "&u="+user!.user_id : "&u="+user!.username : ""}
 		${mods ? "&mods="+mods : ""}${type ? "&type="+type : ""}&limit=${limit || 5}`)
-		if (response) response.forEach((s: Object) => scores.push(new Score(s)))
+		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
+		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${diff_id})`)}
 	
 		return scores
 	}
@@ -149,9 +183,15 @@ export class API {
 	 * @param id The ID of the match
 	 * @returns A Promise with a Match
 	 */
-	async getMatch(id: number): Promise<Match> {
+	async getMatch(id: number): Promise<Match | APIError> {
 		let response = await this.request("get_match", `mp=${id}`)
-		return new Match(response ? response : {})
+		if (!response.match) {return new APIError(`No Match could be found (id: ${id})`)}
+		response.games.forEach((g: any) => {
+			g.getScoringType = () => {
+				return ["score", "accuracy", "combo", "scorev2"][g.scoring_type]
+			}
+		})
+		return correctType(response) as Match
 	}
 }
 
