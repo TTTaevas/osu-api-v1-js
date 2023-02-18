@@ -159,14 +159,27 @@ export class Beatmap {
 	getLanguage(): string {return Languages[this.language_id]}
 }
 
-export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods?: Mods | ModsShort) => Beatmap = (beatmap: Beatmap, mods?: Mods | ModsShort) => {
-	if (mods === undefined) {mods = 0}
-	const arr = getMods(mods, "short")
+export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
+	const arr = getMods(mods, "long")
 	const convertARtoMS = (ar: number) => {
 		ar *= 10
 		let ms = 1800 // AR 0's ms
 		for (let i = 0; i < ar; i++) {ms -= i >= 50 ? 15 : 12}
 		return ms
+	}
+
+	if (arr.includes("EZ")) {
+		beatmap.diff_size /= 2
+		beatmap.diff_approach /= 2
+		beatmap.diff_overall /= 2
+		beatmap.diff_drain /= 2
+	}
+
+	if (arr.includes("HR")) {
+		beatmap.diff_size = Math.min(10, beatmap.diff_size * 1.3)
+		beatmap.diff_approach = Math.min(10, beatmap.diff_approach * 1.4)
+		beatmap.diff_overall = Math.min(10, beatmap.diff_overall * 1.4)
+		beatmap.diff_drain = Math.min(10, beatmap.diff_drain * 1.4)
 	}
 
 	if (arr.includes("DT")) {

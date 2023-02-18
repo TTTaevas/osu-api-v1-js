@@ -103,12 +103,12 @@ export class API {
 	 * @param mods A number representing the mods to apply
 	 * @returns A Promise with a Beatmap
 	 */
-	async getBeatmap(diff_id: number, mods: Mods | ModsShort): Promise<Beatmap> {
+	async getBeatmap(diff_id: number, mods: Mods): Promise<Beatmap> {
 		let success: boolean
 		let beatmap: Beatmap
 	
 		let unsupported_mods = [8, 32] // API returns some stuff as 0/null if any of those mods are included
-		unsupported_mods.forEach((mod) => getMods(mods, "short").includes(ModsShort[mod]) ? mods -= mod : mods -= 0)
+		unsupported_mods.forEach((mod) => getMods(mods, "long").includes(Mods[mod]) ? mods -= mod : mods -= 0)
 	
 		try {
 			let response = await this.request("get_beatmaps", `b=${diff_id}&mods=${mods}`)
