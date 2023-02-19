@@ -10,6 +10,10 @@
     "test": "node ./dist/test.js"
   },
   "author": "Taevas",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TTTaevas/osu-api-v1-js.git"
+  },
   "license": "WTFPL",
   "devDependencies": {
     "@types/node": "^18.13.0",
