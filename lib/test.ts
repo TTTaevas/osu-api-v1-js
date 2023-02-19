@@ -18,7 +18,7 @@ function roundTo(n: number, digits: number) {
 	let multiplicator = Math.pow(10, digits)
 	n = parseFloat((n * multiplicator).toFixed(11))
 	let x = (Math.round(n) / multiplicator).toFixed(digits)
-	if (negative) {x = (n * -1).toFixed(digits)}
+	if (negative) {x = (Number(x) * -1).toFixed(digits)}
 	return Number(x)
 }
 
@@ -69,11 +69,16 @@ const test: () => Promise<void> = async () => {
 
 	let b2 = await api.getBeatmap(2592029, osu.Mods.NoFail)
 	if (b2 instanceof osu.APIError) {throw new Error(`Got an APIError: ${b2.message}`)}
+	// Expected AR is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate#table-comparison
+	// Expected OD is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty#osu!
 	testBeatmapWithMods(b2, osu.Mods.DoubleTime, {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})
 	testBeatmapWithMods(b2, osu.Mods.HalfTime, {bpm: 147, cs: 3, ar: 5, od: 3.56, hp: 4})
 	testBeatmapWithMods(b2, osu.Mods.Easy, {bpm: 196, cs: 1.5, ar: 3.5, od: 3, hp: 2})
-	testBeatmapWithMods(b2, osu.Mods.HardRock, {bpm: 196, cs: 3.90, ar: 9.8, od: 8.4, hp: 5.6})
-	// TODO: Test when multiple mods are active
+	testBeatmapWithMods(b2, osu.Mods.HardRock, {bpm: 196, cs: 3.9, ar: 9.8, od: 8.4, hp: 5.6})
+	testBeatmapWithMods(b2, osu.Mods.DoubleTime + osu.Mods.Easy, {bpm: 294, cs: 1.5, ar: 6.87, od: 6.44, hp: 2})
+	testBeatmapWithMods(b2, osu.Mods.DoubleTime + osu.Mods.HardRock, {bpm: 294, cs: 3.9, ar: 10.87, od: 10.04, hp: 5.6})
+	testBeatmapWithMods(b2, osu.Mods.HalfTime + osu.Mods.Easy, {bpm: 147, cs: 1.5, ar: -0.33, od: -0.44, hp: 2})
+	testBeatmapWithMods(b2, osu.Mods.HalfTime + osu.Mods.HardRock, {bpm: 147, cs: 3.9, ar: 8.73, od: 6.76, hp: 5.6})
 
 	console.log("\nLooks like the test went well!")
 }
