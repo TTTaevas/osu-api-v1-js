@@ -31,9 +31,9 @@ export enum Mods { // Directly taken from https://github.com/ppy/osu-api/wiki
 	Key2           = 268435456,
 	ScoreV2        = 536870912,
 	Mirror         = 1073741824,
-	KeyMod = Key1 | Key2 | Key3 | Key4 | Key5 | Key6 | Key7 | Key8 | Key9 | KeyCoop,
-	FreeModAllowed = NoFail | Easy | Hidden | HardRock | SuddenDeath | Flashlight | FadeIn | Relax | Autopilot | SpunOut | KeyMod,
-	ScoreIncreaseMods = Hidden | HardRock | DoubleTime | Flashlight | FadeIn
+	// KeyMod = Key1 | Key2 | Key3 | Key4 | Key5 | Key6 | Key7 | Key8 | Key9 | KeyCoop,
+	// FreeModAllowed = NoFail | Easy | Hidden | HardRock | SuddenDeath | Flashlight | FadeIn | Relax | Autopilot | SpunOut | KeyMod,
+	// ScoreIncreaseMods = Hidden | HardRock | DoubleTime | Flashlight | FadeIn
 }
 
 export enum ModsShort {
@@ -69,7 +69,19 @@ export enum ModsShort {
 	Key2           = 268435456,
 	ScoreV2        = 536870912,
 	Mirror         = 1073741824,
-	KeyMod = Key1 | Key2 | Key3 | Key4 | Key5 | Key6 | Key7 | Key8 | Key9 | KeyCoop,
-	FreeModAllowed = NF | EZ | HD | HR | SD | FL | FadeIn | RX | AP | SO | KeyMod,
-	ScoreIncreaseMods = HD | HR | DT | FL | FadeIn
+	// KeyMod = Key1 | Key2 | Key3 | Key4 | Key5 | Key6 | Key7 | Key8 | Key9 | KeyCoop,
+	// FreeModAllowed = NF | EZ | HD | HR | SD | FL | FadeIn | RX | AP | SO | KeyMod,
+	// ScoreIncreaseMods = HD | HR | DT | FL | FadeIn
 }
+
+/**
+ * API returns the SR (and pp stuff) of a Beatmap as 0/null if any of those mods are included.
+ * Nightcore would also be featured in this Array, but getBeatmap() circumvents that issue by converting it to DoubleTime!
+ */
+export const unsupported_mods = [
+	Mods.NoFail, Mods.Hidden, Mods.SpunOut, Mods.FadeIn,
+	Mods.SuddenDeath, Mods.Perfect,
+	Mods.Relax, Mods.Autoplay, Mods.Autopilot, Mods.Cinema,
+	Mods.Random, Mods.Target, Mods.ScoreV2, Mods.Mirror,
+	Mods.Key1, Mods.Key2, Mods.Key3, Mods.Key4, Mods.Key5, Mods.Key6, Mods.Key7, Mods.Key8, Mods.Key9, Mods.KeyCoop,
+]

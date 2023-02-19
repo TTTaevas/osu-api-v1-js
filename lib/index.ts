@@ -3,7 +3,7 @@ import { User } from "./user"
 import { Score } from "./score"
 import { adjustBeatmapStatsToMods, Beatmap, Categories, Genres, Languages } from "./beatmap"
 import { Match } from "./match"
-import { Mods, ModsShort } from "./mods"
+import { Mods, ModsShort, unsupported_mods } from "./mods"
 
 function correctType(x: any): any {
 	if (!isNaN(x)) {
@@ -132,8 +132,8 @@ export class API {
 	 * @returns A Promise with a Beatmap
 	 */
 	async getBeatmap(diff_id: number, mods: Mods): Promise<Beatmap | APIError> {
-		const unsupported_mods = [8, 32] // API returns some stuff as 0/null if any of those mods are included
 		unsupported_mods.forEach((mod) => getMods(mods, "long").includes(Mods[mod]) ? mods -= mod : mods -= 0)
+		if (getMods(mods, "long").includes(Mods[Mods.Nightcore])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 	
 		let response = await this.request("get_beatmaps", `b=${diff_id}&mods=${mods}`)
 		if (!response[0]) {return new APIError(`No Beatmap could be found (diff_id: ${diff_id})`)}
