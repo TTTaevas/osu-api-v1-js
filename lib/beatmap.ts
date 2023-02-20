@@ -1,6 +1,8 @@
-import { getMods } from "."
-import { Mods } from "./mods"
+import { getMods, Mods } from "./index"
 
+/**
+ * For the `approved` of Beatmaps https://osu.ppy.sh/wiki/en/Beatmap/Category
+ */
 export enum Categories {
 	graveyard = -2,
 	WIP  			= -1,
@@ -10,6 +12,9 @@ export enum Categories {
 	qualified = 3,
 }
 
+/**
+ * For the `genre_id` of Beatmaps
+ */
 export enum Genres {
 	any 				 = 0,
 	unspecified  = 1,
@@ -28,6 +33,9 @@ export enum Genres {
 	jazz 				 = 14,
 }
 
+/**
+ * For the `language_id` of Beatmaps
+ */
 export enum Languages {
 	any 				 = 0,
 	unspecified  = 1,
@@ -49,14 +57,41 @@ export enum Languages {
 export interface Beatmap {
 	beatmapset_id: number
 	beatmap_id: number
+	/**
+	 * Also known as the id of the category the beatmap is in, for example it'd be 1 if it was ranked
+	 */
 	approved: number
+	/**
+	 * In seconds. Feel free to use the `getLength` function attached to this object to have the length in a "m:ss" format!
+	 */
 	total_length: number
+	/**
+	 * In seconds. Feel free to use the `getLength` function attached to this object to have the length in a "m:ss" format!
+	 */
 	hit_length: number
+	/**
+	 * The name of the difficulty/beatmap (for example, "Mirash's Insane")
+	 */
 	version: string
+	/**
+	 * md5 hash of the beatmap
+	 */
 	file_md5: string
+	/**
+	 * Circle Size https://osu.ppy.sh/wiki/en/Beatmap/Circle_size
+	 */
 	diff_size: number
+	/**
+	 * Overall Difficulty https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty
+	 */
 	diff_overall: number
+	/**
+	 * Approach Rate https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate
+	 */
 	diff_approach: number
+	/**
+	 * Health Drain https://osu.ppy.sh/wiki/en/Gameplay/Health
+	 */
 	diff_drain: number
 	mode: number
 	count_normal: number
@@ -65,10 +100,22 @@ export interface Beatmap {
 	submit_date: Date
 	approved_date: Date
 	last_update: Date
+	/**
+	 * As it's shown on the website (so it's romaji if japanese name)
+	 */
 	artist: string
-	artist_unicode: string | null
+	/**
+	 * As it's shown when you start playing the beatmap (so it's kana/kanji if japanese name)
+	 */
+	artist_unicode: string
+	/**
+	 * As it's shown on the website (so it's romaji if japanese name)
+	 */
 	title: string
-	title_unicode: string | null
+	/**
+	 * As it's shown when you start playing the beatmap (so it's kana/kanji if japanese name)
+	 */
+	title_unicode: string
 	creator: string
 	creator_id: number
 	bpm: number
@@ -84,10 +131,16 @@ export interface Beatmap {
 	audio_unavailable: boolean
 	playcount: number
 	passcount: number
-	packs: string | null // this isn't even documented lol
+	/**
+	 * Undocumented! Is null if the beatmap(set) is not featured in any beatmap pack https://osu.ppy.sh/beatmaps/packs
+	 */
+	packs: string | null
 	max_combo: number
 	diff_aim: number
 	diff_speed: number
+	/**
+	 * Star Rating https://osu.ppy.sh/wiki/en/Beatmap/Star_rating
+	 */
 	difficultyrating: number
 	getLength: Function
 	getCategory: Function

@@ -17,6 +17,9 @@ export interface User {
 	count_rank_s: number
 	count_rank_sh: number
 	count_rank_a: number
+	/**
+	 * Uses the ISO 3166-1 alpha-2 standard https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+	 */
 	country: string
 	total_seconds_played: number
 	pp_country_rank: number
@@ -25,6 +28,9 @@ export interface User {
 		beatmap_id: number
 		beatmapset_id: number
 		date: Date
+		/**
+		 * How "epic" this event is (between 1 and 32)
+		 */
 		epicfactor: number
 	}[]
 }

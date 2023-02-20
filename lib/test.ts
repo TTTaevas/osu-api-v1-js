@@ -1,5 +1,4 @@
 import "dotenv/config"
-import { adjustBeatmapStatsToMods } from "./beatmap"
 import * as osu from "./index"
 import { unsupported_mods } from "./mods"
 
@@ -105,7 +104,7 @@ const test: () => Promise<void> = async () => {
 }
 
 const testBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods, expected: object) => {
-	let bm = adjustBeatmapStatsToMods(Object.assign({}, b), mods)
+	let bm = osu.adjustBeatmapStatsToMods(Object.assign({}, b), mods)
 	let stats = {
 		bpm: roundTo(bm.bpm, 2),
 		cs: roundTo(bm.diff_size, 2),

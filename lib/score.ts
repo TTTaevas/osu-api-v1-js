@@ -10,6 +10,9 @@ export interface Score {
 	countkatu: number
 	countgeki: number
 	perfect: boolean
+	/**
+	 * Bitwise flag. Feel free to use `getMods` to see the mods in a more readable way!
+	 */
 	enabled_mods: number
 	user_id: number
 	date: Date
