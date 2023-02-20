@@ -5,26 +5,8 @@ import { adjustBeatmapStatsToMods, Beatmap, Categories, Genres, Languages } from
 import { Match } from "./match"
 import { Mods, ModsShort, unsupported_mods } from "./mods"
 
-function correctType(x: any): any {
-	if (!isNaN(x)) {
-		return Number(x)
-	} else if (/[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/.test(x)) {
-		return new Date(x + "Z")
-	} else if (Array.isArray(x)) {
-		return x.map((e) => correctType(e))
-	} else if (typeof x === "object" && x !== null) {
-		const k = Object.keys(x)
-		const v = Object.values(x)
-		for (let i = 0; i < k.length; i++) {
-			x[k[i]] = correctType(v[i])
-		}
-		return x
-	} else {
-		return x
-	}
-}
-
-export {User, Score, Beatmap, Match, Mods, ModsShort}
+export {User, Score, Match, Mods, ModsShort}
+export {Beatmap, Categories, Genres, Languages, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string
@@ -218,4 +200,28 @@ export function getMods(value: Mods | ModsShort, version: "short" | "long"): str
 		}
 	}
 	return arr
+}
+
+/**
+ * *Almost* **everything** in the JSONs the API returns is a string, this function fixes that
+ * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
+ * @returns x, but with it (or what it contains) now having the correct type
+ */
+function correctType(x: any): any {
+	if (!isNaN(x)) {
+		return Number(x)
+	} else if (/^[+-[0-9][0-9]+-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(x)) {
+		return new Date(x + "Z") // add Z to string to specify it's UTC
+	} else if (Array.isArray(x)) {
+		return x.map((e) => correctType(e))
+	} else if (typeof x === "object" && x !== null) {
+		const k = Object.keys(x)
+		const v = Object.values(x)
+		for (let i = 0; i < k.length; i++) {
+			x[k[i]] = correctType(v[i])
+		}
+		return x
+	} else {
+		return x
+	}
 }
