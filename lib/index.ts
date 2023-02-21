@@ -98,7 +98,7 @@ export class API {
 	async getUserScores(user: {user_id?: number, username?: string} | User, mode: number, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
-		if (!user.user_id && !user.username) {return new APIError("No proper `search` argument was given")}
+		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
 		let type = user.user_id ? "id" : "string"
 	
 		let response = await this.request(`get_user_${plays}`, `u=${type == "id" ? user.user_id : user.username}&type=${type}&m=${mode}&limit=${limit || 5}`)
@@ -143,18 +143,18 @@ export class API {
 	 * @param diff_id The ID of the difficulty/beatmap of the beatmapset
 	 * @param mode The Scores' gamemode; 0: osu!, 1: taiko, 2: ctb, 3: mania
 	 * @param user The Scores' user, which is an Object with either a `user_id` or a `username`
-	 * @param mods A number representing the mods to apply
-	 * @param limit The maximum number of scores to get, cannot exceed 100
+	 * @param mods A number representing the mods to apply, defaults to 0 (no mod)
+	 * @param limit The maximum number of scores to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of Scores set on a beatmap
 	 */
 	async getBeatmapScores(diff_id: number, mode: number, user?: {user_id?: number, username?: string} | User, mods?: ModsShort, limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
-		if (user && !user.user_id && !user.username) {return scores}
+		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
 		let type = user ? user.user_id ? "id" : user.username ? "string" : false : false
 	
 		let response = await this.request("get_scores", `b=${diff_id}&m=${mode}${type ? type == "id" ? "&u="+user!.user_id : "&u="+user!.username : ""}
-		${mods ? "&mods="+mods : ""}${type ? "&type="+type : ""}&limit=${limit || 5}`)
+		${mods ? "&mods="+mods : ""}${type ? "&type="+type : ""}&limit=${limit || 100}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${diff_id})`)}
 	
@@ -207,6 +207,7 @@ export function getMods(value: Mods | ModsShort, version: "short" | "long"): str
  * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
  * @returns x, but with it (or what it contains) now having the correct type
  */
+const bools = ["perfect", "replay_available"]
 function correctType(x: any): any {
 	if (!isNaN(x)) {
 		return Number(x)
@@ -218,10 +219,8 @@ function correctType(x: any): any {
 		const k = Object.keys(x)
 		const v = Object.values(x)
 		for (let i = 0; i < k.length; i++) {
-			x[k[i]] = correctType(v[i])
+			x[k[i]] = bools.includes(k[i]) ? Boolean(v[i]) : correctType(v[i])
 		}
-		return x
-	} else {
-		return x
 	}
+	return x
 }
