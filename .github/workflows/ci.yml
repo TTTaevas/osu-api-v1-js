@@ -2,6 +2,9 @@ on:
   pull_request_target:
     types:
       - opened
+    paths-ignore:
+      - 'LICENSE'
+      - '.npmignore'
 name: Node.js CI
 
 jobs:
