@@ -92,7 +92,7 @@ export class API {
 	 * @param user An Object with either a `user_id` or a `username`
 	 * @param mode The User's gamemode; 0: osu!, 1: taiko, 2: ctb, 3: mania
 	 * @param plays The User's top pp plays or the User's plays within the last 24 hours
-	 * @param limit The maximum number of scores to get, cannot exceed 100
+	 * @param limit The maximum number of scores to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of Scores set by the User in a specific mode
 	 */
 	async getUserScores(user: {user_id?: number, username?: string} | User, mode: number, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
@@ -101,7 +101,7 @@ export class API {
 		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
 		let type = user.user_id ? "id" : "string"
 	
-		let response = await this.request(`get_user_${plays}`, `u=${type == "id" ? user.user_id : user.username}&type=${type}&m=${mode}&limit=${limit || 5}`)
+		let response = await this.request(`get_user_${plays}`, `u=${type == "id" ? user.user_id : user.username}&type=${type}&m=${mode}&limit=${limit || 100}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (user_id: ${user.user_id} | username: ${user.username})`)}
 	

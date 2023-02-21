@@ -113,6 +113,24 @@ const test: () => Promise<void> = async () => {
 	process.stdout.write("Requesting scores from a bad Beatmap: ")
 	await api.getBeatmapScores(bad_id, 0)
 
+	const scores_limit = 10
+	process.stdout.write("\nRequesting the best scores of a normal User: ")
+	let u_scores1 = await api.getUserScores({user_id: 2}, 0, "best", scores_limit)
+	if (u_scores1 instanceof osu.APIError) {
+		throw new Error(`Got an APIError: ${u_scores1.message}`)
+	}
+	if (u_scores1.length !== scores_limit) {
+		throw new Error(`The array doesn't have a normal amount of scores!
+		Expected: ${scores_limit}
+		Got: ${u_scores1.length}`)
+	}
+	process.stdout.write("Requesting the best scores from a bad User: ")
+	await api.getUserScores({user_id: bad_id}, 0, "best", scores_limit)
+	process.stdout.write("Requesting the recent scores from a normal User: ")
+	await api.getUserScores({user_id: 2}, 0, "recent", scores_limit)
+	process.stdout.write("Requesting the recent scores from a bad User: ")
+	await api.getUserScores({user_id: bad_id}, 0, "recent", scores_limit)
+
 	console.log("\nLooks like the test went well!")
 }
 
