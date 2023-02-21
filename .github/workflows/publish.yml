@@ -31,6 +31,9 @@ jobs:
           registry-url: 'https://npm.pkg.github.com/'
           scope: '@tttaevas'
 
+      # See https://github.com/actions/setup-node/issues/156#issuecomment-803057923
+      - run: >
+          sed -i '/"license"/ i \\  "publishConfig": {\n    "registry": "https://npm.pkg.github.com/"\n \ },' package.json
       - run: yarn
       - run: yarn publish
         env:
