@@ -2,9 +2,6 @@ on:
   pull_request_target:
     types:
       - opened
-    paths:
-      - '**.ts'
-      - '**.json'
 name: Node.js CI
 
 jobs:
