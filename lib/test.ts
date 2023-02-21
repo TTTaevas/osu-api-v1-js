@@ -54,7 +54,6 @@ const test: () => Promise<void> = async () => {
 
 	// Check if getBeatmap() works fine
 	const song_name = "FriendZoned"
-
 	process.stdout.write("\nRequesting a normal Beatmap: ")
 	let b1 = await api.getBeatmap(m1.games[1].beatmap_id, 0)
 	if (b1 instanceof osu.APIError) {
@@ -99,6 +98,38 @@ const test: () => Promise<void> = async () => {
 			throw new Error(`Beatmaps with the mod ${value} have a difficultyrating of 0!`)
 		}
 	}
+
+	const score_amount = 132408001
+	process.stdout.write("\nRequesting scores from a normal Beatmap: ")
+	let b_scores = await api.getBeatmapScores(129891, 0, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
+	if (b_scores instanceof osu.APIError) {
+		throw new Error(`Got an APIError: ${b_scores.message}`)
+	}
+	if (b_scores[0].score < score_amount) {
+		throw new Error(`The first score's amount is not what it should be!
+		Expected: ${score_amount} or more
+		Got: ${b_scores[0].score}`)
+	}
+	process.stdout.write("Requesting scores from a bad Beatmap: ")
+	await api.getBeatmapScores(bad_id, 0)
+
+	const scores_limit = 10
+	process.stdout.write("\nRequesting the best scores of a normal User: ")
+	let u_scores1 = await api.getUserScores({user_id: 2}, 0, "best", scores_limit)
+	if (u_scores1 instanceof osu.APIError) {
+		throw new Error(`Got an APIError: ${u_scores1.message}`)
+	}
+	if (u_scores1.length !== scores_limit) {
+		throw new Error(`The array doesn't have a normal amount of scores!
+		Expected: ${scores_limit}
+		Got: ${u_scores1.length}`)
+	}
+	process.stdout.write("Requesting the best scores from a bad User: ")
+	await api.getUserScores({user_id: bad_id}, 0, "best", scores_limit)
+	process.stdout.write("Requesting the recent scores from a normal User: ")
+	await api.getUserScores({user_id: 2}, 0, "recent", scores_limit)
+	process.stdout.write("Requesting the recent scores from a bad User: ")
+	await api.getUserScores({user_id: bad_id}, 0, "recent", scores_limit)
 
 	console.log("\nLooks like the test went well!")
 }
