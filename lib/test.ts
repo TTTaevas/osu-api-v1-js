@@ -54,7 +54,6 @@ const test: () => Promise<void> = async () => {
 
 	// Check if getBeatmap() works fine
 	const song_name = "FriendZoned"
-
 	process.stdout.write("\nRequesting a normal Beatmap: ")
 	let b1 = await api.getBeatmap(m1.games[1].beatmap_id, 0)
 	if (b1 instanceof osu.APIError) {
@@ -99,6 +98,20 @@ const test: () => Promise<void> = async () => {
 			throw new Error(`Beatmaps with the mod ${value} have a difficultyrating of 0!`)
 		}
 	}
+
+	const score_amount = 132408001
+	process.stdout.write("\nRequesting scores from a normal Beatmap: ")
+	let b_scores = await api.getBeatmapScores(129891, 0, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
+	if (b_scores instanceof osu.APIError) {
+		throw new Error(`Got an APIError: ${b_scores.message}`)
+	}
+	if (b_scores[0].score < score_amount) {
+		throw new Error(`The first score's amount is not what it should be!
+		Expected: ${score_amount} or more
+		Got: ${b_scores[0].score}`)
+	}
+	process.stdout.write("Requesting scores from a bad Beatmap: ")
+	await api.getBeatmapScores(bad_id, 0)
 
 	console.log("\nLooks like the test went well!")
 }

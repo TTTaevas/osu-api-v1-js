@@ -152,9 +152,9 @@ export class API {
 	
 		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
 		let type = user ? user.user_id ? "id" : user.username ? "string" : false : false
-	
-		let response = await this.request("get_scores", `b=${diff_id}&m=${mode}${type ? type == "id" ? "&u="+user!.user_id : "&u="+user!.username : ""}
-		${mods ? "&mods="+mods : ""}${type ? "&type="+type : ""}&limit=${limit || 100}`)
+		let r_user = type ? type == "id" ? "&u="+user!.user_id : "&u="+user!.username : ""
+		
+		let response = await this.request("get_scores", `b=${diff_id}&m=${mode}${r_user}${mods ? "&mods="+mods : ""}${type ? "&type="+type : ""}&limit=${limit || 100}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${diff_id})`)}
 	
