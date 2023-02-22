@@ -261,8 +261,14 @@ export function getMods(value: Mods): string[] {
  * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
  * @returns x, but with it (or what it contains) now having the correct type
  */
-const bools = ["perfect", "replay_available"]
 function correctType(x: any): any {
+	const bools = [
+		"replay_available", // Score
+		"pass", // Match.games
+		"perfect", // Score, Match.games
+		"storyboard", "video", "download_unavailable", "audio_unavailable" // Beatmap
+	]
+
 	if (!isNaN(x)) {
 		return Number(x)
 	} else if (/^[+-[0-9][0-9]+-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(x)) {
@@ -273,7 +279,7 @@ function correctType(x: any): any {
 		const k = Object.keys(x)
 		const v = Object.values(x)
 		for (let i = 0; i < k.length; i++) {
-			x[k[i]] = bools.includes(k[i]) ? Boolean(v[i]) : correctType(v[i])
+			x[k[i]] = bools.includes(k[i]) ? Boolean(Number(v[i])) : correctType(v[i])
 		}
 	}
 	return x

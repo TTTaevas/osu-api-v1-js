@@ -122,7 +122,10 @@ export interface Beatmap {
 	creator: string
 	creator_id: number
 	bpm: number
-	source: string
+	/**
+	 * Is 0 if no source
+	 */
+	source: string | 0
 	tags: string
 	genre_id: number
 	language_id: number
@@ -130,7 +133,13 @@ export interface Beatmap {
 	rating: number
 	storyboard: boolean
 	video: boolean
+	/**
+	 * If the map can **not** be downloaded from the website
+	 */
 	download_unavailable: boolean
+	/**
+	 * If the map can **not** be downloaded with its audio file
+	 */
 	audio_unavailable: boolean
 	playcount: number
 	passcount: number
@@ -149,6 +158,7 @@ export interface Beatmap {
 }
 
 export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
+	beatmap = Object.assign({}, beatmap) // Do not change the original Beatmap outside this function
 	const arr = getMods(mods)
 	const convertARtoMS = (ar: number) => {
 		ar *= 10
