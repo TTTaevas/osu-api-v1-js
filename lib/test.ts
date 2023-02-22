@@ -132,6 +132,21 @@ const test: () => Promise<void> = async () => {
 	process.stdout.write("Requesting the recent scores from a bad User: ")
 	await api.getUserScores({user_id: bad_id}, osu.Gamemodes.MANIA, "recent", scores_limit)
 
+	// Check if getReplay() works fine
+	const replay_id = 2177560145
+	process.stdout.write("\nRequesting the Replay from a normal score: ")
+	let replay = await api.getReplay({id: replay_id}, osu.Gamemodes.OSU)
+	if (replay instanceof osu.APIError) {
+		throw new Error(`Got an APIError: ${replay.message}`)
+	}
+	if (replay.content.length < 1000) {
+		throw new Error(`The content of the replay is not what it should be!
+		Expected: A string of length 1000 or more
+		Got: ${replay.content.length}`)
+	}
+	process.stdout.write("Requesting the Replay from a bad score: ")
+	await api.getReplay({id: bad_id}, osu.Gamemodes.TAIKO, osu.Mods.Autopilot)
+
 	console.log("\nLooks like the test went well!")
 }
 

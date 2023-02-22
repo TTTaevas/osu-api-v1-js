@@ -196,8 +196,8 @@ export class API {
 			return new APIError("No proper `score` argument was given (it lacks either an `id` or a `search`)")
 		}
 
-		let response = await this.request("get_replay", `${lookup}${type ? "&type="+type : ""}${mods ? "&mods="+mods : ""}`)
-		if (!response.match) {return new APIError(`No Replay could be found`)}
+		let response = await this.request("get_replay", `${lookup}&m=${mode}${type ? "&type="+type : ""}${mods ? "&mods="+mods : ""}`)
+		if (!response.content) {return new APIError(`No Replay could be found`)}
 		return correctType(response) as Replay
 	}
 }
