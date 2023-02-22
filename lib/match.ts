@@ -56,6 +56,5 @@ export interface Match {
 			 */
 			enabled_mods: number | null
 		}[]
-		getScoringType: Function
 	}[]
 }

@@ -166,11 +166,6 @@ export class API {
 	async getMatch(id: number): Promise<Match | APIError> {
 		let response = await this.request("get_match", `mp=${id}`)
 		if (!response.match) {return new APIError(`No Match could be found (id: ${id})`)}
-		response.games.forEach((g: any) => {
-			g.getScoringType = () => {
-				return ["score", "accuracy", "combo", "scorev2"][g.scoring_type]
-			}
-		})
 		return correctType(response) as Match
 	}
 }
@@ -194,7 +189,27 @@ export enum Gamemodes {
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu!mania
 	 */
-	MANIA = 3
+	MANIA = 3,
+}
+
+/**
+ * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#team-mode-gameplay
+ */
+export enum MultiplayerModes {
+	"HEAD TO HEAD" = 0,
+	"TAG CO-OP" 	 = 1,
+	"TEAM VS" 		 = 2,
+	"TAG TEAM VS"  = 3,
+}
+
+/**
+ * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#win-condition
+ */
+export enum WinConditions {
+	SCORE 		 = 0,
+	ACCURACY 	 = 1,
+	COMBO 		 = 2,
+	"SCORE V2" = 3,
 }
 
 /**
