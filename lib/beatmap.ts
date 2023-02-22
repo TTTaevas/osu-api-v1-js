@@ -1,57 +1,57 @@
 import { getMods, Mods } from "./index"
 
 /**
- * For the `approved` of Beatmaps https://osu.ppy.sh/wiki/en/Beatmap/Category
+ * For the `approved` of a `Beatmap` (for example, `Categories[beatmap.approved]` would return "RANKED" if 1) https://osu.ppy.sh/wiki/en/Beatmap/Category
  */
 export enum Categories {
-	graveyard = -2,
+	GRAVEYARD = -2,
 	WIP  			= -1,
-	pending 	= 0,
-	ranked  	= 1,
-	approved 	= 2,
-	qualified = 3,
+	PENDING 	= 0,
+	RANKED  	= 1,
+	APPROVED 	= 2,
+	QUALIFIED = 3,
 }
 
 /**
- * For the `genre_id` of Beatmaps
+ * For the `genre_id` of a `Beatmap` (for example, `Genres[beatmap.genre_id]` would return "NOVELTY" if 7)
  */
 export enum Genres {
-	any 				 = 0,
-	unspecified  = 1,
-	"video game" = 2,
-	anime 			 = 3,
-	rock 				 = 4,
-	pop 				 = 5,
-	other 			 = 6,
-	novelty 		 = 7,
+	ANY 				 = 0,
+	UNSPECIFIED  = 1,
+	"VIDEO GAME" = 2,
+	ANIME 			 = 3,
+	ROCK 				 = 4,
+	POP 				 = 5,
+	OTHER 			 = 6,
+	NOVELTY 		 = 7,
 	"" 					 = 8,
-	"hip hop" 	 = 9,
-	electronic 	 = 10,
-	metal 			 = 11,
-	classical 	 = 12,
-	folk 				 = 13,
-	jazz 				 = 14,
+	"HIP HOP" 	 = 9,
+	ELECTRONIC 	 = 10,
+	METAL 			 = 11,
+	CLASSICAL 	 = 12,
+	FOLK 				 = 13,
+	JAZZ 				 = 14,
 }
 
 /**
- * For the `language_id` of Beatmaps
+ * For the `language_id` of a `Beatmap` (for example, `Languages[beatmap.language_id]` would return "FRENCH" if 7)
  */
 export enum Languages {
-	any 				 = 0,
-	unspecified  = 1,
-	english 		 = 2,
-	japanese 		 = 3,
-	chinese 		 = 4,
-	instrumental = 5,
-	korean 			 = 6,
-	french 			 = 7,
-	german 			 = 8,
-	swedish 		 = 9,
-	spanish 		 = 10,
-	italian 		 = 11,
-	russian 		 = 12,
-	polish 			 = 13,
-	other 			 = 14,
+	ANY 				 = 0,
+	UNSPECIFIED  = 1,
+	ENGLISH 		 = 2,
+	JAPANESE 		 = 3,
+	CHINESE 		 = 4,
+	INSTRUMENTAL = 5,
+	KOREAN 			 = 6,
+	FRENCH 			 = 7,
+	GERMAN 			 = 8,
+	SWEDISH 		 = 9,
+	SPANISH 		 = 10,
+	ITALIAN 		 = 11,
+	RUSSIAN 		 = 12,
+	POLISH 			 = 13,
+	OTHER 			 = 14,
 }
 
 export interface Beatmap {
@@ -146,9 +146,6 @@ export interface Beatmap {
 	 */
 	difficultyrating: number
 	getLength: Function
-	getCategory: Function
-	getGenre: Function
-	getLanguage: Function
 }
 
 export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {

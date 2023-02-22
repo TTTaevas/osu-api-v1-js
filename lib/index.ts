@@ -133,9 +133,6 @@ export class API {
 			
 			return `${m}:${s}`
 		}
-		beatmap.getCategory = () => {return Categories[beatmap.approved]}
-		beatmap.getGenre = () => {return Genres[beatmap.genre_id]}
-		beatmap.getLanguage = () => {return Languages[beatmap.language_id]}
 
 		return beatmap
 	}
