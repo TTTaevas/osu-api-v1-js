@@ -93,6 +93,9 @@ export interface Beatmap {
 	 * Health Drain https://osu.ppy.sh/wiki/en/Gameplay/Health
 	 */
 	diff_drain: number
+	/**
+	 * The number representing the Gamemode for which the API responsed (it may not be the requested Gamemode if the beatmap is exclusive to Taiko/CTB/Mania)
+	 */
 	mode: number
 	count_normal: number
 	count_slider: number

@@ -25,7 +25,7 @@ const test: () => Promise<void> = async () => {
 	// Check if getUser() works fine
 	const user_id = 7276846
 	process.stdout.write("\nRequesting a normal User: ")
-	let u1 = await api.getUser({user_id}, 0)
+	let u1 = await api.getUser({user_id}, osu.Gamemodes.OSU)
 	if (u1 instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${u1.message}`)
 	}
@@ -35,7 +35,7 @@ const test: () => Promise<void> = async () => {
 		Got: ${u1.user_id}`)
 	}
 	process.stdout.write("Requesting a bad User: ")
-	await api.getUser({user_id: bad_id}, 3)
+	await api.getUser({user_id: bad_id}, osu.Gamemodes.MANIA)
 
 	// Check if getMatch() works fine
 	const match_name = "IT: (tout le monde) vs (Adéquat feur)"
@@ -55,7 +55,7 @@ const test: () => Promise<void> = async () => {
 	// Check if getBeatmap() works fine
 	const song_name = "FriendZoned"
 	process.stdout.write("\nRequesting a normal Beatmap: ")
-	let b1 = await api.getBeatmap(m1.games[1].beatmap_id, 0)
+	let b1 = await api.getBeatmap(m1.games[1].beatmap_id)
 	if (b1 instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${b1.message}`)
 	}
@@ -65,7 +65,7 @@ const test: () => Promise<void> = async () => {
 		Got: ${b1.title}`)
 	}
 	process.stdout.write("Requesting a bad Beatmap: ")
-	await api.getBeatmap(bad_id, 0)
+	await api.getBeatmap(bad_id)
 
 	process.stdout.write("\nRequesting another normal Beatmap once in order to change its stats with mods: ")
 	let b2 = await api.getBeatmap(2592029, osu.Mods.NoFail)
@@ -101,7 +101,7 @@ const test: () => Promise<void> = async () => {
 
 	const score_amount = 132408001
 	process.stdout.write("\nRequesting scores from a normal Beatmap: ")
-	let b_scores = await api.getBeatmapScores(129891, 0, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
+	let b_scores = await api.getBeatmapScores(129891, osu.Gamemodes.OSU, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
 	if (b_scores instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${b_scores.message}`)
 	}
@@ -111,11 +111,11 @@ const test: () => Promise<void> = async () => {
 		Got: ${b_scores[0].score}`)
 	}
 	process.stdout.write("Requesting scores from a bad Beatmap: ")
-	await api.getBeatmapScores(bad_id, 0)
+	await api.getBeatmapScores(bad_id, osu.Gamemodes.OSU)
 
 	const scores_limit = 10
 	process.stdout.write("\nRequesting the best scores of a normal User: ")
-	let u_scores1 = await api.getUserScores({user_id: 2}, 0, "best", scores_limit)
+	let u_scores1 = await api.getUserScores({user_id: 2}, osu.Gamemodes.OSU, "best", scores_limit)
 	if (u_scores1 instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${u_scores1.message}`)
 	}
@@ -125,11 +125,11 @@ const test: () => Promise<void> = async () => {
 		Got: ${u_scores1.length}`)
 	}
 	process.stdout.write("Requesting the best scores from a bad User: ")
-	await api.getUserScores({user_id: bad_id}, 0, "best", scores_limit)
+	await api.getUserScores({user_id: bad_id}, osu.Gamemodes.TAIKO, "best", scores_limit)
 	process.stdout.write("Requesting the recent scores from a normal User: ")
-	await api.getUserScores({user_id: 2}, 0, "recent", scores_limit)
+	await api.getUserScores({user_id: 2}, osu.Gamemodes.CTB, "recent", scores_limit)
 	process.stdout.write("Requesting the recent scores from a bad User: ")
-	await api.getUserScores({user_id: bad_id}, 0, "recent", scores_limit)
+	await api.getUserScores({user_id: bad_id}, osu.Gamemodes.MANIA, "recent", scores_limit)
 
 	console.log("\nLooks like the test went well!")
 }
