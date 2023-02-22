@@ -149,7 +149,7 @@ export interface Beatmap {
 }
 
 export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
-	const arr = getMods(mods, "short")
+	const arr = getMods(mods)
 	const convertARtoMS = (ar: number) => {
 		ar *= 10
 		let ms = 1800 // AR 0's ms
@@ -157,21 +157,21 @@ export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap
 		return ms
 	}
 
-	if (arr.includes("EZ")) {
+	if (arr.includes("Easy")) {
 		beatmap.diff_size /= 2
 		beatmap.diff_approach /= 2
 		beatmap.diff_overall /= 2
 		beatmap.diff_drain /= 2
 	}
 
-	if (arr.includes("HR")) {
+	if (arr.includes("HardRock")) {
 		beatmap.diff_size = Math.min(10, beatmap.diff_size * 1.3)
 		beatmap.diff_approach = Math.min(10, beatmap.diff_approach * 1.4)
 		beatmap.diff_overall = Math.min(10, beatmap.diff_overall * 1.4)
 		beatmap.diff_drain = Math.min(10, beatmap.diff_drain * 1.4)
 	}
 
-	if (arr.includes("DT")) {
+	if (arr.includes("DoubleTime") || arr.includes("Nightcore")) {
 		beatmap.total_length /= 1.5
 		beatmap.hit_length /= 1.5
 		beatmap.bpm *= 1.5
@@ -179,7 +179,7 @@ export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap
 		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 1.5)) / 6
 	}
 
-	if (arr.includes("HT")) {
+	if (arr.includes("HalfTime")) {
 		beatmap.total_length /= 0.75
 		beatmap.hit_length /= 0.75
 		beatmap.bpm *= 0.75

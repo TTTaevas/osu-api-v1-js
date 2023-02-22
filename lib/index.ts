@@ -3,9 +3,9 @@ import { User } from "./user"
 import { Score } from "./score"
 import { adjustBeatmapStatsToMods, Beatmap, Categories, Genres, Languages } from "./beatmap"
 import { Match } from "./match"
-import { Mods, ModsShort, unsupported_mods } from "./mods"
+import { Mods, unsupported_mods } from "./mods"
 
-export {User, Score, Match, Mods, ModsShort}
+export {User, Score, Match, Mods}
 export {Beatmap, Categories, Genres, Languages, adjustBeatmapStatsToMods}
 
 export class APIError {
@@ -115,8 +115,8 @@ export class API {
 	 */
 	async getBeatmap(diff_id: number, mods?: Mods): Promise<Beatmap | APIError> {
 		if (mods === undefined) {mods = Mods.None}
-		unsupported_mods.forEach((mod) => getMods(mods!, "long").includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
-		if (getMods(mods, "long").includes(Mods[Mods.Nightcore])) {mods -= Mods.Nightcore - Mods.DoubleTime}
+		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
+		if (getMods(mods).includes(Mods[Mods.Nightcore])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 	
 		let response = await this.request("get_beatmaps", `b=${diff_id}&mods=${mods}`)
 		if (!response[0]) {return new APIError(`No Beatmap could be found (diff_id: ${diff_id})`)}
@@ -145,7 +145,7 @@ export class API {
 	 * @param limit The maximum number of `Scores` to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set on a beatmap
 	 */
-	async getBeatmapScores(diff_id: number, mode: Gamemodes, user?: {user_id?: number, username?: string} | User, mods?: ModsShort, limit?: number): Promise<Score[] | APIError> {
+	async getBeatmapScores(diff_id: number, mode: Gamemodes, user?: {user_id?: number, username?: string} | User, mods?: Mods, limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
 		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
@@ -214,17 +214,12 @@ export enum WinConditions {
 
 /**
  * @param value A number representing the `Mods`
- * @param version Whether the `Mods` are shown respectively like `["HD", "HR"]` or `["Hidden", "HardRock"]`
  * @returns An Array of Strings, each string representing a mod
  */
-export function getMods(value: Mods | ModsShort, version: "short" | "long"): string[] {
+export function getMods(value: Mods): string[] {
 	let arr: string[] = []
 	for (let bit = 1; bit != 0; bit <<= 1) { 
-		if (version == "short") {
-			if ((value & bit) != 0 && bit in ModsShort) {arr.push(ModsShort[bit])}
-		} else {
-			if ((value & bit) != 0 && bit in Mods) {arr.push(Mods[bit])}
-		}
+		if ((value & bit) != 0 && bit in Mods) {arr.push(Mods[bit])}
 	}
 	return arr
 }

@@ -72,12 +72,13 @@ const test: () => Promise<void> = async () => {
 	if (b2 instanceof osu.APIError) {throw new Error(`Got an APIError: ${b2.message}`)}
 	// Expected AR is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate#table-comparison
 	// Expected OD is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty#osu!
-	testBeatmapWithMods(b2, osu.Mods.DoubleTime, {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})
+	const dtnc = [osu.Mods.DoubleTime, osu.Mods.Nightcore]
+	for (let i=0;i<dtnc.length;i++) {testBeatmapWithMods(b2, dtnc[i], {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})}
 	testBeatmapWithMods(b2, osu.Mods.HalfTime, {bpm: 147, cs: 3, ar: 5, od: 3.56, hp: 4})
 	testBeatmapWithMods(b2, osu.Mods.Easy, {bpm: 196, cs: 1.5, ar: 3.5, od: 3, hp: 2})
 	testBeatmapWithMods(b2, osu.Mods.HardRock, {bpm: 196, cs: 3.9, ar: 9.8, od: 8.4, hp: 5.6})
-	testBeatmapWithMods(b2, osu.Mods.DoubleTime + osu.Mods.Easy, {bpm: 294, cs: 1.5, ar: 6.87, od: 6.44, hp: 2})
-	testBeatmapWithMods(b2, osu.Mods.DoubleTime + osu.Mods.HardRock, {bpm: 294, cs: 3.9, ar: 10.87, od: 10.04, hp: 5.6})
+	for (let i=0;i<dtnc.length;i++) {testBeatmapWithMods(b2, dtnc[i] + osu.Mods.Easy, {bpm: 294, cs: 1.5, ar: 6.87, od: 6.44, hp: 2})}
+	for (let i=0;i<dtnc.length;i++) {testBeatmapWithMods(b2, dtnc[i] + osu.Mods.HardRock, {bpm: 294, cs: 3.9, ar: 10.87, od: 10.04, hp: 5.6})}
 	testBeatmapWithMods(b2, osu.Mods.HalfTime + osu.Mods.Easy, {bpm: 147, cs: 1.5, ar: -0.33, od: -0.44, hp: 2})
 	testBeatmapWithMods(b2, osu.Mods.HalfTime + osu.Mods.HardRock, {bpm: 147, cs: 3.9, ar: 8.73, od: 6.76, hp: 5.6})
 
@@ -87,7 +88,7 @@ const test: () => Promise<void> = async () => {
 		// So if we were to request a beatmap with such a mod here, we'd be requesting it with NM instead
 		// I honestly just don't wanna make the same request in a row ~15 times :skull:
 		if (unsupported_mods.includes(Number(key))) {
-			console.log("The following mod will not be requested as it'd be pointless:", osu.getMods(Number(key), "long"))
+			console.log("The following mod will not be requested as it'd be pointless:", osu.getMods(Number(key)))
 			continue
 		}
 		
@@ -145,9 +146,9 @@ const testBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods, expected: object) =
 	}
 	if (JSON.stringify(stats) !== JSON.stringify(expected)) {
 		console.log("Expected", expected, "but got", stats)
-		throw new Error(`The beatmap's stats with the mods ${osu.getMods(mods, "long")} are not what they should be!`)
+		throw new Error(`The beatmap's stats with the mods ${osu.getMods(mods)} are not what they should be!`)
 	} else {
-		console.log(osu.getMods(mods, "long"), "Beatmaps' stats are looking good!")
+		console.log(osu.getMods(mods), "Beatmaps' stats are looking good!")
 	}
 }
 
