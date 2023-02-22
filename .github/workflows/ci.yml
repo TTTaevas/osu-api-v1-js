@@ -1,5 +1,5 @@
 on: 
-  pull_request_target:
+  pull_request:
     types:
       - opened
     paths-ignore:
@@ -11,6 +11,8 @@ jobs:
   test:
     name: Setup and test
     runs-on: ubuntu-latest
+    env:
+      KEY: ${{ vars.KEY }}
 
     strategy:
       matrix:
@@ -23,11 +25,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-
-    - name: Create env file
-      run: |
-        touch .env
-        echo KEY=${{ secrets.KEY }} >> .env
 
     - name: Install dependencies
       uses: borales/actions-yarn@v4
