@@ -4,8 +4,9 @@ import { Score } from "./score"
 import { adjustBeatmapStatsToMods, Beatmap, Categories, Genres, Languages } from "./beatmap"
 import { Match } from "./match"
 import { Mods, unsupported_mods } from "./mods"
+import { Replay } from "./replay"
 
-export {User, Score, Match, Mods}
+export {User, Score, Match, Mods, Replay}
 export {Beatmap, Categories, Genres, Languages, adjustBeatmapStatsToMods}
 
 export class APIError {
@@ -167,6 +168,37 @@ export class API {
 		let response = await this.request("get_match", `mp=${id}`)
 		if (!response.match) {return new APIError(`No Match could be found (id: ${id})`)}
 		return correctType(response) as Match
+	}
+	
+	async getReplay(score: {id?: number, search?: {user?: {user_id?: number, username?: string} | User, beatmap_id?: number}},
+	mode: Gamemodes, mods?: Mods): Promise<Replay | APIError> {
+		let lookup: string
+		let type: string | Boolean
+		if (score.id !== undefined) {
+			lookup = `s=${score.id}`
+			type = false
+		} else if (score.search !== undefined) {
+			if (score.search.user === undefined || score.search.beatmap_id === undefined) {
+				return new APIError("No proper `score.search` argument was given (it lacks either an `user` or a `beatmap_id`)")
+			} else {
+				if (score.search.user.user_id !== undefined) {
+					lookup = `u=${score.search.user.user_id}`
+					type = "id"
+				} else if (score.search.user.username !== undefined) {
+					lookup = `u=${score.search.user.username}`
+					type = "string"
+				} else {
+					return new APIError("No proper `score.search.user` argument was given (it lacks either an `user_id` or an `username`)")
+				}
+				lookup += `&b=${score.search.beatmap_id}`
+			}
+		} else {
+			return new APIError("No proper `score` argument was given (it lacks either an `id` or a `search`)")
+		}
+
+		let response = await this.request("get_replay", `${lookup}&m=${mode}${type ? "&type="+type : ""}${mods ? "&mods="+mods : ""}`)
+		if (!response.content) {return new APIError(`No Replay could be found`)}
+		return correctType(response) as Replay
 	}
 }
 
