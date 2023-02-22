@@ -25,7 +25,7 @@ const test: () => Promise<void> = async () => {
 	// Check if getUser() works fine
 	const user_id = 7276846
 	process.stdout.write("\nRequesting a normal User: ")
-	let u1 = await api.getUser({user_id}, 0)
+	let u1 = await api.getUser({user_id}, osu.Gamemodes.OSU)
 	if (u1 instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${u1.message}`)
 	}
@@ -35,7 +35,7 @@ const test: () => Promise<void> = async () => {
 		Got: ${u1.user_id}`)
 	}
 	process.stdout.write("Requesting a bad User: ")
-	await api.getUser({user_id: bad_id}, 3)
+	await api.getUser({user_id: bad_id}, osu.Gamemodes.MANIA)
 
 	// Check if getMatch() works fine
 	const match_name = "IT: (tout le monde) vs (Adéquat feur)"
@@ -55,7 +55,7 @@ const test: () => Promise<void> = async () => {
 	// Check if getBeatmap() works fine
 	const song_name = "FriendZoned"
 	process.stdout.write("\nRequesting a normal Beatmap: ")
-	let b1 = await api.getBeatmap(m1.games[1].beatmap_id, 0)
+	let b1 = await api.getBeatmap(m1.games[1].beatmap_id)
 	if (b1 instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${b1.message}`)
 	}
@@ -65,19 +65,20 @@ const test: () => Promise<void> = async () => {
 		Got: ${b1.title}`)
 	}
 	process.stdout.write("Requesting a bad Beatmap: ")
-	await api.getBeatmap(bad_id, 0)
+	await api.getBeatmap(bad_id)
 
 	process.stdout.write("\nRequesting another normal Beatmap once in order to change its stats with mods: ")
 	let b2 = await api.getBeatmap(2592029, osu.Mods.NoFail)
 	if (b2 instanceof osu.APIError) {throw new Error(`Got an APIError: ${b2.message}`)}
 	// Expected AR is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate#table-comparison
 	// Expected OD is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty#osu!
-	testBeatmapWithMods(b2, osu.Mods.DoubleTime, {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})
+	const dtnc = [osu.Mods.DoubleTime, osu.Mods.Nightcore]
+	for (let i=0;i<dtnc.length;i++) {testBeatmapWithMods(b2, dtnc[i], {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})}
 	testBeatmapWithMods(b2, osu.Mods.HalfTime, {bpm: 147, cs: 3, ar: 5, od: 3.56, hp: 4})
 	testBeatmapWithMods(b2, osu.Mods.Easy, {bpm: 196, cs: 1.5, ar: 3.5, od: 3, hp: 2})
 	testBeatmapWithMods(b2, osu.Mods.HardRock, {bpm: 196, cs: 3.9, ar: 9.8, od: 8.4, hp: 5.6})
-	testBeatmapWithMods(b2, osu.Mods.DoubleTime + osu.Mods.Easy, {bpm: 294, cs: 1.5, ar: 6.87, od: 6.44, hp: 2})
-	testBeatmapWithMods(b2, osu.Mods.DoubleTime + osu.Mods.HardRock, {bpm: 294, cs: 3.9, ar: 10.87, od: 10.04, hp: 5.6})
+	for (let i=0;i<dtnc.length;i++) {testBeatmapWithMods(b2, dtnc[i] + osu.Mods.Easy, {bpm: 294, cs: 1.5, ar: 6.87, od: 6.44, hp: 2})}
+	for (let i=0;i<dtnc.length;i++) {testBeatmapWithMods(b2, dtnc[i] + osu.Mods.HardRock, {bpm: 294, cs: 3.9, ar: 10.87, od: 10.04, hp: 5.6})}
 	testBeatmapWithMods(b2, osu.Mods.HalfTime + osu.Mods.Easy, {bpm: 147, cs: 1.5, ar: -0.33, od: -0.44, hp: 2})
 	testBeatmapWithMods(b2, osu.Mods.HalfTime + osu.Mods.HardRock, {bpm: 147, cs: 3.9, ar: 8.73, od: 6.76, hp: 5.6})
 
@@ -87,7 +88,7 @@ const test: () => Promise<void> = async () => {
 		// So if we were to request a beatmap with such a mod here, we'd be requesting it with NM instead
 		// I honestly just don't wanna make the same request in a row ~15 times :skull:
 		if (unsupported_mods.includes(Number(key))) {
-			console.log("The following mod will not be requested as it'd be pointless:", osu.getMods(Number(key), "long"))
+			console.log("The following mod will not be requested as it'd be pointless:", osu.getMods(Number(key)))
 			continue
 		}
 		
@@ -101,7 +102,7 @@ const test: () => Promise<void> = async () => {
 
 	const score_amount = 132408001
 	process.stdout.write("\nRequesting scores from a normal Beatmap: ")
-	let b_scores = await api.getBeatmapScores(129891, 0, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
+	let b_scores = await api.getBeatmapScores(129891, osu.Gamemodes.OSU, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
 	if (b_scores instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${b_scores.message}`)
 	}
@@ -111,11 +112,11 @@ const test: () => Promise<void> = async () => {
 		Got: ${b_scores[0].score}`)
 	}
 	process.stdout.write("Requesting scores from a bad Beatmap: ")
-	await api.getBeatmapScores(bad_id, 0)
+	await api.getBeatmapScores(bad_id, osu.Gamemodes.OSU)
 
 	const scores_limit = 10
 	process.stdout.write("\nRequesting the best scores of a normal User: ")
-	let u_scores1 = await api.getUserScores({user_id: 2}, 0, "best", scores_limit)
+	let u_scores1 = await api.getUserScores({user_id: 2}, osu.Gamemodes.OSU, "best", scores_limit)
 	if (u_scores1 instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${u_scores1.message}`)
 	}
@@ -125,11 +126,11 @@ const test: () => Promise<void> = async () => {
 		Got: ${u_scores1.length}`)
 	}
 	process.stdout.write("Requesting the best scores from a bad User: ")
-	await api.getUserScores({user_id: bad_id}, 0, "best", scores_limit)
+	await api.getUserScores({user_id: bad_id}, osu.Gamemodes.TAIKO, "best", scores_limit)
 	process.stdout.write("Requesting the recent scores from a normal User: ")
-	await api.getUserScores({user_id: 2}, 0, "recent", scores_limit)
+	await api.getUserScores({user_id: 2}, osu.Gamemodes.CTB, "recent", scores_limit)
 	process.stdout.write("Requesting the recent scores from a bad User: ")
-	await api.getUserScores({user_id: bad_id}, 0, "recent", scores_limit)
+	await api.getUserScores({user_id: bad_id}, osu.Gamemodes.MANIA, "recent", scores_limit)
 
 	console.log("\nLooks like the test went well!")
 }
@@ -145,9 +146,9 @@ const testBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods, expected: object) =
 	}
 	if (JSON.stringify(stats) !== JSON.stringify(expected)) {
 		console.log("Expected", expected, "but got", stats)
-		throw new Error(`The beatmap's stats with the mods ${osu.getMods(mods, "long")} are not what they should be!`)
+		throw new Error(`The beatmap's stats with the mods ${osu.getMods(mods)} are not what they should be!`)
 	} else {
-		console.log(osu.getMods(mods, "long"), "Beatmaps' stats are looking good!")
+		console.log(osu.getMods(mods), "Beatmaps' stats are looking good!")
 	}
 }
 

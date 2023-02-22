@@ -1,57 +1,57 @@
 import { getMods, Mods } from "./index"
 
 /**
- * For the `approved` of Beatmaps https://osu.ppy.sh/wiki/en/Beatmap/Category
+ * For the `approved` of a `Beatmap` (for example, `Categories[beatmap.approved]` would return "RANKED" if 1) https://osu.ppy.sh/wiki/en/Beatmap/Category
  */
 export enum Categories {
-	graveyard = -2,
+	GRAVEYARD = -2,
 	WIP  			= -1,
-	pending 	= 0,
-	ranked  	= 1,
-	approved 	= 2,
-	qualified = 3,
+	PENDING 	= 0,
+	RANKED  	= 1,
+	APPROVED 	= 2,
+	QUALIFIED = 3,
 }
 
 /**
- * For the `genre_id` of Beatmaps
+ * For the `genre_id` of a `Beatmap` (for example, `Genres[beatmap.genre_id]` would return "NOVELTY" if 7)
  */
 export enum Genres {
-	any 				 = 0,
-	unspecified  = 1,
-	"video game" = 2,
-	anime 			 = 3,
-	rock 				 = 4,
-	pop 				 = 5,
-	other 			 = 6,
-	novelty 		 = 7,
+	ANY 				 = 0,
+	UNSPECIFIED  = 1,
+	"VIDEO GAME" = 2,
+	ANIME 			 = 3,
+	ROCK 				 = 4,
+	POP 				 = 5,
+	OTHER 			 = 6,
+	NOVELTY 		 = 7,
 	"" 					 = 8,
-	"hip hop" 	 = 9,
-	electronic 	 = 10,
-	metal 			 = 11,
-	classical 	 = 12,
-	folk 				 = 13,
-	jazz 				 = 14,
+	"HIP HOP" 	 = 9,
+	ELECTRONIC 	 = 10,
+	METAL 			 = 11,
+	CLASSICAL 	 = 12,
+	FOLK 				 = 13,
+	JAZZ 				 = 14,
 }
 
 /**
- * For the `language_id` of Beatmaps
+ * For the `language_id` of a `Beatmap` (for example, `Languages[beatmap.language_id]` would return "FRENCH" if 7)
  */
 export enum Languages {
-	any 				 = 0,
-	unspecified  = 1,
-	english 		 = 2,
-	japanese 		 = 3,
-	chinese 		 = 4,
-	instrumental = 5,
-	korean 			 = 6,
-	french 			 = 7,
-	german 			 = 8,
-	swedish 		 = 9,
-	spanish 		 = 10,
-	italian 		 = 11,
-	russian 		 = 12,
-	polish 			 = 13,
-	other 			 = 14,
+	ANY 				 = 0,
+	UNSPECIFIED  = 1,
+	ENGLISH 		 = 2,
+	JAPANESE 		 = 3,
+	CHINESE 		 = 4,
+	INSTRUMENTAL = 5,
+	KOREAN 			 = 6,
+	FRENCH 			 = 7,
+	GERMAN 			 = 8,
+	SWEDISH 		 = 9,
+	SPANISH 		 = 10,
+	ITALIAN 		 = 11,
+	RUSSIAN 		 = 12,
+	POLISH 			 = 13,
+	OTHER 			 = 14,
 }
 
 export interface Beatmap {
@@ -93,6 +93,9 @@ export interface Beatmap {
 	 * Health Drain https://osu.ppy.sh/wiki/en/Gameplay/Health
 	 */
 	diff_drain: number
+	/**
+	 * The number representing the Gamemode for which the API responsed (it may not be the requested Gamemode if the beatmap is exclusive to Taiko/CTB/Mania)
+	 */
 	mode: number
 	count_normal: number
 	count_slider: number
@@ -143,13 +146,10 @@ export interface Beatmap {
 	 */
 	difficultyrating: number
 	getLength: Function
-	getCategory: Function
-	getGenre: Function
-	getLanguage: Function
 }
 
 export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
-	const arr = getMods(mods, "short")
+	const arr = getMods(mods)
 	const convertARtoMS = (ar: number) => {
 		ar *= 10
 		let ms = 1800 // AR 0's ms
@@ -157,21 +157,21 @@ export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap
 		return ms
 	}
 
-	if (arr.includes("EZ")) {
+	if (arr.includes("Easy")) {
 		beatmap.diff_size /= 2
 		beatmap.diff_approach /= 2
 		beatmap.diff_overall /= 2
 		beatmap.diff_drain /= 2
 	}
 
-	if (arr.includes("HR")) {
+	if (arr.includes("HardRock")) {
 		beatmap.diff_size = Math.min(10, beatmap.diff_size * 1.3)
 		beatmap.diff_approach = Math.min(10, beatmap.diff_approach * 1.4)
 		beatmap.diff_overall = Math.min(10, beatmap.diff_overall * 1.4)
 		beatmap.diff_drain = Math.min(10, beatmap.diff_drain * 1.4)
 	}
 
-	if (arr.includes("DT")) {
+	if (arr.includes("DoubleTime") || arr.includes("Nightcore")) {
 		beatmap.total_length /= 1.5
 		beatmap.hit_length /= 1.5
 		beatmap.bpm *= 1.5
@@ -179,7 +179,7 @@ export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap
 		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 1.5)) / 6
 	}
 
-	if (arr.includes("HT")) {
+	if (arr.includes("HalfTime")) {
 		beatmap.total_length /= 0.75
 		beatmap.hit_length /= 0.75
 		beatmap.bpm *= 0.75
