@@ -22,6 +22,10 @@ jobs:
   publish-gpr:
     name: Publish on GPR
     runs-on: ubuntu-latest
+    # Without it, I'm pretty sure yarn would say it published the package without actually doing it
+    # See https://github.com/yarnpkg/yarn/issues/5931
+    permissions:
+      packages: write
 
     steps:
       - uses: actions/checkout@v3
