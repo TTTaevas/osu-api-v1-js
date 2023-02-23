@@ -84,9 +84,9 @@ export class API {
 	 */
 	async getUser(search: {user_id?: number, username?: string} | User, mode: Gamemodes): Promise<User | APIError> {
 		if (!search.user_id && !search.username) {return new APIError("No proper `search` argument was given")}
-		let type = search.user_id ? "id" : "string"
+		let lookup = search.user_id !== undefined ? `u=${search.user_id}&type=id` : `u=${search.username}&type=string`
 	
-		let response = await this.request("get_user", `u=${type == "id" ? search.user_id : search.username}&type=${type}&m=${mode}`)
+		let response = await this.request("get_user", `${lookup}&m=${mode}`)
 		if (!response[0]) {return new APIError(`No User could be found (user_id: ${search.user_id} | username: ${search.username})`)}
 		return correctType(response[0]) as User
 	}
@@ -100,14 +100,12 @@ export class API {
 	 */
 	async getUserScores(user: {user_id?: number, username?: string} | User, mode: Gamemodes, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
-	
 		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
-		let type = user.user_id ? "id" : "string"
+		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
-		let response = await this.request(`get_user_${plays}`, `u=${type == "id" ? user.user_id : user.username}&type=${type}&m=${mode}&limit=${limit || 100}`)
+		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${mode}&limit=${limit || 100}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (user_id: ${user.user_id} | username: ${user.username})`)}
-	
 		return scores
 	}
 
@@ -197,10 +195,9 @@ export class API {
 		let scores: Score[] = []
 	
 		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
-		let type = user ? user.user_id ? "id" : user.username ? "string" : false : false
-		let r_user = type ? type == "id" ? "&u="+user!.user_id : "&u="+user!.username : ""
+		let user_lookup = user ? user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string` : ""
 		
-		let response = await this.request("get_scores", `b=${diff_id}&m=${mode}${r_user}${mods ? "&mods="+mods : ""}${type ? "&type="+type : ""}&limit=${limit || 100}`)
+		let response = await this.request("get_scores", `b=${diff_id}&m=${mode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit || 100}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${diff_id})`)}
 	
@@ -227,18 +224,14 @@ export class API {
 	async getReplay(mode: Gamemodes, score?: {score_id: number} | Score,
 	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}): Promise<Replay | APIError> {
 		let lookup: string
-		let type: string | Boolean
 
 		if (score !== undefined) {
 			lookup = `s=${score.score_id}`
-			type = false
 		} else if (search !== undefined) {
 			if (search.user.user_id !== undefined) {
-				lookup = `u=${search.user.user_id}`
-				type = "id"
+				lookup = `u=${search.user.user_id}&type=id`
 			} else if (search.user.username !== undefined) {
-				lookup = `u=${search.user.username}`
-				type = "string"
+				lookup = `u=${search.user.username}&type=string`
 			} else {
 				return new APIError("No proper `score.search.user` argument was given (it lacks either an `user_id` or an `username`)")
 			}
@@ -248,7 +241,7 @@ export class API {
 			return new APIError("No proper `score` or `search` argument was given")
 		}
 
-		let response = await this.request("get_replay", `${lookup}&m=${mode}${type ? "&type="+type : ""}`)
+		let response = await this.request("get_replay", `${lookup}&m=${mode}`)
 		if (!response.content) {return new APIError(`No Replay could be found`)}
 		return correctType(response) as Replay
 	}
