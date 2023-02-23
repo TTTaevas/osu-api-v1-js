@@ -160,38 +160,37 @@ export class API {
 	}
 	
 	/**
-	 * @param score An Object with either the id of the score, or with the id of a `Beatmap` and an `User`'s id or username
+	 * Specify the gamemode the score was set in, then say if you know the id of the `Score` OR if you know the score's `User`, `Beatmap`, and `Mods`
 	 * @param mode A number representing the `Gamemode` the `Score` was set in
-	 * @param mods A number representing the `Mods` used in the `Score`
-	 * @returns 
+	 * @param score An Object with a `score_id`, that obviously represents the id of the `Score`
+	 * @param search An Object with stuff regarding the `User`, `Beatmap`, and `Mods`
+	 * @returns If possible, a `Replay` of that `Score`
 	 */
-	async getReplay(score: {id?: number, search?: {user?: {user_id?: number, username?: string} | User, beatmap_id?: number}},
-	mode: Gamemodes, mods?: Mods): Promise<Replay | APIError> {
+	async getReplay(mode: Gamemodes, score?: {score_id: number} | Score,
+	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}): Promise<Replay | APIError> {
 		let lookup: string
 		let type: string | Boolean
-		if (score.id !== undefined) {
-			lookup = `s=${score.id}`
+
+		if (score !== undefined) {
+			lookup = `s=${score.score_id}`
 			type = false
-		} else if (score.search !== undefined) {
-			if (score.search.user === undefined || score.search.beatmap_id === undefined) {
-				return new APIError("No proper `score.search` argument was given (it lacks either an `user` or a `beatmap_id`)")
+		} else if (search !== undefined) {
+			if (search.user.user_id !== undefined) {
+				lookup = `u=${search.user.user_id}`
+				type = "id"
+			} else if (search.user.username !== undefined) {
+				lookup = `u=${search.user.username}`
+				type = "string"
 			} else {
-				if (score.search.user.user_id !== undefined) {
-					lookup = `u=${score.search.user.user_id}`
-					type = "id"
-				} else if (score.search.user.username !== undefined) {
-					lookup = `u=${score.search.user.username}`
-					type = "string"
-				} else {
-					return new APIError("No proper `score.search.user` argument was given (it lacks either an `user_id` or an `username`)")
-				}
-				lookup += `&b=${score.search.beatmap_id}`
+				return new APIError("No proper `score.search.user` argument was given (it lacks either an `user_id` or an `username`)")
 			}
+			lookup += `&b=${search.beatmap.beatmap_id}`
+			lookup += `&mods=${search.mods}`
 		} else {
-			return new APIError("No proper `score` argument was given (it lacks either an `id` or a `search`)")
+			return new APIError("No proper `score` or `search` argument was given")
 		}
 
-		let response = await this.request("get_replay", `${lookup}&m=${mode}${type ? "&type="+type : ""}${mods ? "&mods="+mods : ""}`)
+		let response = await this.request("get_replay", `${lookup}&m=${mode}${type ? "&type="+type : ""}`)
 		if (!response.content) {return new APIError(`No Replay could be found`)}
 		return correctType(response) as Replay
 	}

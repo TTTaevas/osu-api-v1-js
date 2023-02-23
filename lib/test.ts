@@ -135,7 +135,7 @@ const test: () => Promise<void> = async () => {
 	// Check if getReplay() works fine
 	const replay_id = 2177560145
 	process.stdout.write("\nRequesting the Replay from a normal score: ")
-	let replay = await api.getReplay({id: replay_id}, osu.Gamemodes.OSU)
+	let replay = await api.getReplay(osu.Gamemodes.OSU, {score_id: replay_id})
 	if (replay instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${replay.message}`)
 	}
@@ -145,7 +145,7 @@ const test: () => Promise<void> = async () => {
 		Got: ${replay.content.length}`)
 	}
 	process.stdout.write("Requesting the Replay from a bad score: ")
-	await api.getReplay({id: bad_id}, osu.Gamemodes.TAIKO, osu.Mods.Autopilot)
+	await api.getReplay(osu.Gamemodes.TAIKO, {score_id: bad_id})
 
 	console.log("\nLooks like the test went well!")
 }
