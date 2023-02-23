@@ -148,8 +148,14 @@ export interface Beatmap {
 	 */
 	packs: string | null
 	max_combo: number
-	diff_aim: number
-	diff_speed: number
+	/**
+	 * Is null if mode is 1 or 3 (taiko or mania)
+	 */
+	diff_aim: number | null
+	/**
+	 * Is null if mode is 1, 2, or 3 (taiko, ctb, or mania)
+	 */
+	diff_speed: number | null
 	/**
 	 * Star Rating https://osu.ppy.sh/wiki/en/Beatmap/Star_rating
 	 */
