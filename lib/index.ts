@@ -45,7 +45,8 @@ export class API {
 			headers: {
 				"Accept": "application/json",
 				"Accept-Encoding": "gzip",
-				"Content-Type": "application/json"
+				"Content-Type": "application/json",
+				"User-Agent": "osu-api-v1-js (https://github.com/TTTaevas/osu-api-v1-js)"
 			}
 		})
 		.catch((error: Error | AxiosError) => {
@@ -158,6 +159,12 @@ export class API {
 		return correctType(response) as Match
 	}
 	
+	/**
+	 * @param score An Object with either the id of the score, or with the id of a `Beatmap` and an `User`'s id or username
+	 * @param mode A number representing the `Gamemode` the `Score` was set in
+	 * @param mods A number representing the `Mods` used in the `Score`
+	 * @returns 
+	 */
 	async getReplay(score: {id?: number, search?: {user?: {user_id?: number, username?: string} | User, beatmap_id?: number}},
 	mode: Gamemodes, mods?: Mods): Promise<Replay | APIError> {
 		let lookup: string
@@ -269,6 +276,9 @@ export function getLength(seconds: number): string {
  * @returns x, but with it (or what it contains) now having the correct type
  */
 function correctType(x: any): any {
+	/**
+	 * This package transforms some properties into Booleans when fitting
+	 */
 	const bools = [
 		"replay_available", // Score
 		"pass", // Match.games
