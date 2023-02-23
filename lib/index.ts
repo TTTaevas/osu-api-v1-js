@@ -91,7 +91,7 @@ export class API {
 	}
 
 	/**
-	 * @param user An Object with either a `user_id` or a `username`
+	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param mode The `User`'s `Gamemode`
 	 * @param plays The `User`'s top pp plays/`Scores` or the `User`'s plays/`Scores` within the last 24 hours
 	 * @param limit The maximum number of Scores to get, cannot exceed 100, defaults to 100
@@ -111,20 +111,77 @@ export class API {
 	}
 
 	/**
-	 * @param diff_id The ID of the difficulty/`Beatmap` of the beatmapset
-	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod)
+	 * Look for and get a singular `Beatmap` with this!
+	 * @param beatmap An Ibject with the ID of the difficulty/`Beatmap` of the beatmapset
+	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
+	 * @param mode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
 	 * @returns A Promise with a `Beatmap`
 	 */
-	async getBeatmap(diff_id: number, mods?: Mods): Promise<Beatmap | APIError> {
+	async getBeatmap(beatmap: {beatmap_id: number} | Beatmap, mods?: Mods, mode?: Gamemodes): Promise<Beatmap | APIError> {
 		if (mods === undefined) {mods = Mods.None}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
 		if (getMods(mods).includes(Mods[Mods.Nightcore])) {mods -= Mods.Nightcore - Mods.DoubleTime}
+		if (mode === undefined) {mode = Gamemodes.OSU}
 	
-		let response = await this.request("get_beatmaps", `b=${diff_id}&mods=${mods}`)
-		if (!response[0]) {return new APIError(`No Beatmap could be found (diff_id: ${diff_id})`)}
-		let beatmap: Beatmap = adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
+		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}&mode=${mode}&a=1`)
+		if (!response[0]) {return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id})`)}
 
-		return beatmap
+		return adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
+	}
+
+	/**
+	 * Look for and get `Beatmap`s with this! Returns an `APIError` if the array would be empty
+	 * @param limit (max is 500) The maximum amount of `Beatmap`s there should be in the array
+	 * @param mode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
+	 * @param beatmap Will look for its `beatmapset_id` (if undefined, its `beatmap_id` (if undefined, its `file_md5`))
+	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
+	 * @param set_owner The `User` that owns the beatmapset
+	 * @param since Filters out any `Beatmap` of `Category < 0`, and any `Beatmap` with an `approved_date` older than what's given
+	 */
+	async getBeatmaps(
+	limit: number, mode: Gamemodes,
+	beatmap?: {beatmapset_id?: number, beatmap_id?: number, file_md5?: string} | Beatmap,
+	mods?: Mods,
+	set_owner?: {user_id?: number, username?: string} | User,
+	since?: Date
+	): Promise<Beatmap[] | APIError> {
+		if (mods === undefined) {mods = Mods.None}
+		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
+		if (getMods(mods).includes(Mods[Mods.Nightcore])) {mods -= Mods.Nightcore - Mods.DoubleTime}
+		let lookup = `mods=${mods}`
+		
+		if (beatmap) {
+			if (beatmap.beatmapset_id !== undefined) {
+				lookup += `&s=${beatmap.beatmapset_id}`
+			} else if (beatmap.beatmap_id !== undefined) {
+				lookup += `&b=${beatmap.beatmap_id}`
+			} else if (beatmap.file_md5 !== undefined) {
+				lookup += `&h=${beatmap.file_md5}`
+			} else {
+				return new APIError("The `beatmap` argument was given but it doesn't have at least one good property!")
+			}
+		}
+
+		if (set_owner) {
+			if (set_owner.user_id !== undefined) {
+				lookup += `&u=${set_owner.user_id}&type=id`
+			} else if (set_owner.username !== undefined) {
+				lookup += `&u=${set_owner.username}&type=string`
+			} else {
+				return new APIError("The `set_owner` argument was given but it doesn't have at least one good property!")
+			}
+		}
+
+		if (since) {
+			let x = since.toISOString().replace("T", " ")
+			lookup += x.substring(0, x.indexOf("Z") - 4)
+		}
+
+		let response = await this.request("get_beatmaps", `limit=${limit}&m=${mode}&a=1${lookup}`)
+		if (!response[0]) {return new APIError(`No Beatmap could be found`)}
+		let beatmaps: Beatmap[] = response.map((b: Beatmap) => adjustBeatmapStatsToMods(correctType(b), mods || Mods.None))
+
+		return beatmaps
 	}
 
 	/**

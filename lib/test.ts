@@ -55,7 +55,7 @@ const test: () => Promise<void> = async () => {
 	// Check if getBeatmap() works fine
 	const song_name = "FriendZoned"
 	process.stdout.write("\nRequesting a normal Beatmap: ")
-	let b1 = await api.getBeatmap(m1.games[1].beatmap_id)
+	let b1 = await api.getBeatmap({beatmap_id: m1.games[1].beatmap_id})
 	if (b1 instanceof osu.APIError) {
 		throw new Error(`Got an APIError: ${b1.message}`)
 	}
@@ -65,10 +65,10 @@ const test: () => Promise<void> = async () => {
 		Got: ${b1.title}`)
 	}
 	process.stdout.write("Requesting a bad Beatmap: ")
-	await api.getBeatmap(bad_id)
+	await api.getBeatmap({beatmap_id: bad_id})
 
 	process.stdout.write("\nRequesting another normal Beatmap once in order to change its stats with mods: ")
-	let b2 = await api.getBeatmap(2592029, osu.Mods.NoFail)
+	let b2 = await api.getBeatmap({beatmap_id: 2592029}, osu.Mods.NoFail)
 	if (b2 instanceof osu.APIError) {throw new Error(`Got an APIError: ${b2.message}`)}
 	// Expected AR is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate#table-comparison
 	// Expected OD is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty#osu!
@@ -93,7 +93,7 @@ const test: () => Promise<void> = async () => {
 		}
 		
 		process.stdout.write(`Requesting SR of Beatmap with mod ${value}: `)
-		let b3 = await api.getBeatmap(2592029, Number(key))
+		let b3 = await api.getBeatmap(b2, Number(key))
 		if (b3 instanceof osu.APIError) {throw new Error(`Got an APIError: ${b3.message}`)}
 		if (b3.difficultyrating === 0) {
 			throw new Error(`Beatmaps with the mod ${value} have a difficultyrating of 0!`)
