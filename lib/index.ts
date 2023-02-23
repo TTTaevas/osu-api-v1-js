@@ -52,15 +52,16 @@ export class API {
 		.catch((error: Error | AxiosError) => {
 			if (axios.isAxiosError(error)) {
 				if (error.response) {
-					if (this.verbose) console.log("osu!api v1 ->", error.response.statusText, error.response.status, {type, params})
+					console.log("osu!api v1 ->", error.response.statusText, error.response.status, {type, params})
+					if (error.response.status === 401) console.log("osu!api v1 -> Server responded with status code 401, are you sure you're using a valid API key?")
 				} else if (error.request) {
-					if (this.verbose) console.log("osu!api v1 ->", "Request made but server did not respond", `Try #${number_try}`, {type, params})
+					console.log("osu!api v1 ->", "Request made but server did not respond", `(Try #${number_try})`, {type, params})
 					to_retry = true
 				} else { // Something happened in setting up the request that triggered an error, I think
-					if (this.verbose) console.error(error)
+					console.error(error)
 				}
 			} else {
-				if (this.verbose) console.error(error)
+				console.error(error)
 			}
 		})
 		

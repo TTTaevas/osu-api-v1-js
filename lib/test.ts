@@ -35,7 +35,9 @@ const test: () => Promise<void> = async () => {
 		Got: ${u1.user_id}`)
 	}
 	process.stdout.write("Requesting a bad User: ")
-	await api.getUser({user_id: bad_id}, osu.Gamemodes.MANIA)
+	if (!(await api.getUser({user_id: bad_id}, osu.Gamemodes.MANIA) instanceof osu.APIError)) {
+		throw new Error("Expected an APIError upon requesting a bad User")
+	}
 
 	// Check if getMatch() works fine
 	const match_name = "IT: (tout le monde) vs (Adéquat feur)"
@@ -50,7 +52,9 @@ const test: () => Promise<void> = async () => {
 		Got: ${m1.match.name}`)
 	}
 	process.stdout.write("Requesting a bad Match: ")
-	await api.getMatch(bad_id)
+	if (!(await api.getMatch(bad_id) instanceof osu.APIError)) {
+		throw new Error("Expected an APIError upon requesting a bad Match")
+	}
 
 	// Check if getBeatmap() works fine
 	const song_name = "FriendZoned"
@@ -65,7 +69,9 @@ const test: () => Promise<void> = async () => {
 		Got: ${b1.title}`)
 	}
 	process.stdout.write("Requesting a bad Beatmap: ")
-	await api.getBeatmap({beatmap_id: bad_id})
+	if (!(await api.getBeatmap({beatmap_id: bad_id}) instanceof osu.APIError)) {
+		throw new Error("Expected an APIError upon requesting a bad Beatmap")
+	}
 
 	process.stdout.write("\nRequesting another normal Beatmap once in order to change its stats with mods: ")
 	let b2 = await api.getBeatmap({beatmap_id: 2592029}, osu.Mods.NoFail)
@@ -112,7 +118,9 @@ const test: () => Promise<void> = async () => {
 		Got: ${b_scores[0].score}`)
 	}
 	process.stdout.write("Requesting scores from a bad Beatmap: ")
-	await api.getBeatmapScores(bad_id, osu.Gamemodes.OSU)
+	if (!(await api.getBeatmapScores(bad_id, osu.Gamemodes.OSU) instanceof osu.APIError)) {
+		throw new Error("Expected an APIError upon requesting scores from a bad Beatmap")
+	}
 
 	const scores_limit = 10
 	process.stdout.write("\nRequesting the best scores of a normal User: ")
@@ -126,11 +134,15 @@ const test: () => Promise<void> = async () => {
 		Got: ${u_scores1.length}`)
 	}
 	process.stdout.write("Requesting the best scores from a bad User: ")
-	await api.getUserScores({user_id: bad_id}, osu.Gamemodes.TAIKO, "best", scores_limit)
+	if (!(await api.getUserScores({user_id: bad_id}, osu.Gamemodes.TAIKO, "best", scores_limit) instanceof osu.APIError)) {
+		throw new Error("Expected an APIError upon requesting top scores from a bad User")
+	}
 	process.stdout.write("Requesting the recent scores from a normal User: ")
 	await api.getUserScores({user_id: 2}, osu.Gamemodes.CTB, "recent", scores_limit)
 	process.stdout.write("Requesting the recent scores from a bad User: ")
-	await api.getUserScores({user_id: bad_id}, osu.Gamemodes.MANIA, "recent", scores_limit)
+	if (!(await api.getUserScores({user_id: bad_id}, osu.Gamemodes.MANIA, "recent", scores_limit) instanceof osu.APIError)) {
+		throw new Error("Expected an APIError upon requesting recent scores from a bad User")
+	}
 
 	// Check if getReplay() works fine
 	const replay_id = 2177560145
@@ -145,7 +157,9 @@ const test: () => Promise<void> = async () => {
 		Got: ${replay.content.length}`)
 	}
 	process.stdout.write("Requesting the Replay from a bad score: ")
-	await api.getReplay(osu.Gamemodes.TAIKO, {score_id: bad_id})
+	if (!(await api.getReplay(osu.Gamemodes.TAIKO, {score_id: bad_id}) instanceof osu.APIError)) {
+		throw new Error("Expected an APIError upon requesting a bad Replay")
+	}
 
 	console.log("\nLooks like the test went well!")
 }

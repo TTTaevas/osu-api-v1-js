@@ -40,7 +40,7 @@ export enum Mods { // Directly taken from https://github.com/ppy/osu-api/wiki
  * API returns the SR (and pp stuff) of a Beatmap as 0/null if any of those mods are included.
  * Nightcore would also be featured in this Array, but getBeatmap() circumvents that issue by converting it to DoubleTime!
  */
-export const unsupported_mods = [
+export const unsupported_mods = [ // exported only for test.ts, not to be used normally
 	Mods.NoFail, Mods.Hidden, Mods.SpunOut, Mods.FadeIn,
 	Mods.SuddenDeath, Mods.Perfect,
 	Mods.Relax, Mods.Autoplay, Mods.Autopilot, Mods.Cinema,
