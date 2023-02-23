@@ -151,7 +151,7 @@ const test: () => Promise<void> = async () => {
 }
 
 const testBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods, expected: object) => {
-	let bm = osu.adjustBeatmapStatsToMods(Object.assign({}, b), mods)
+	let bm = osu.adjustBeatmapStatsToMods(b, mods)
 	let stats = {
 		bpm: roundTo(bm.bpm, 2),
 		cs: roundTo(bm.diff_size, 2),

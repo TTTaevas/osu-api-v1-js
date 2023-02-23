@@ -45,7 +45,8 @@ export class API {
 			headers: {
 				"Accept": "application/json",
 				"Accept-Encoding": "gzip",
-				"Content-Type": "application/json"
+				"Content-Type": "application/json",
+				"User-Agent": "osu-api-v1-js (https://github.com/TTTaevas/osu-api-v1-js)"
 			}
 		})
 		.catch((error: Error | AxiosError) => {
@@ -123,18 +124,6 @@ export class API {
 		if (!response[0]) {return new APIError(`No Beatmap could be found (diff_id: ${diff_id})`)}
 		let beatmap: Beatmap = adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
 
-		beatmap.getLength = (type: "hit" | "total") => {
-			let length = type === "hit" ? beatmap.hit_length : beatmap.total_length
-			let m: number = 0
-			let s: string | number = 0
-			
-			while (length >= 60) {m += 1; length -= 60}
-			while (length >= 1) {s += 1; length -= 1}
-			if (s < 10) {s = `0${s}`}
-			
-			return `${m}:${s}`
-		}
-
 		return beatmap
 	}
 
@@ -170,6 +159,12 @@ export class API {
 		return correctType(response) as Match
 	}
 	
+	/**
+	 * @param score An Object with either the id of the score, or with the id of a `Beatmap` and an `User`'s id or username
+	 * @param mode A number representing the `Gamemode` the `Score` was set in
+	 * @param mods A number representing the `Mods` used in the `Score`
+	 * @returns 
+	 */
 	async getReplay(score: {id?: number, search?: {user?: {user_id?: number, username?: string} | User, beatmap_id?: number}},
 	mode: Gamemodes, mods?: Mods): Promise<Replay | APIError> {
 		let lookup: string
@@ -257,12 +252,40 @@ export function getMods(value: Mods): string[] {
 }
 
 /**
+ * This function exists in case you need help getting a Beatmap's length in a readable way
+ * @param seconds A number of seconds
+ * @returns A String that represents `seconds` in format m:ss (with support for hours if needed)
+ */
+export function getLength(seconds: number): string {
+	let h: string | number = 0
+	let m: string | number = 0
+	let s: string | number = 0
+	
+	while (seconds >= 3600) {h += 1; seconds -= 3600}
+	while (seconds >= 60) {m += 1; seconds -= 60}
+	if (m < 10 && h > 0) {m = `0${m}`}
+	while (seconds >= 1) {s += 1; seconds -= 1}
+	if (s < 10) {s = `0${s}`}
+	
+	return `${h > 0 ? `${h}:` : ""}${m}:${s}`
+}
+
+/**
  * *Almost* **everything** in the JSONs the API returns is a string, this function fixes that
  * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
  * @returns x, but with it (or what it contains) now having the correct type
  */
-const bools = ["perfect", "replay_available"]
 function correctType(x: any): any {
+	/**
+	 * This package transforms some properties into Booleans when fitting
+	 */
+	const bools = [
+		"replay_available", // Score
+		"pass", // Match.games
+		"perfect", // Score, Match.games
+		"storyboard", "video", "download_unavailable", "audio_unavailable" // Beatmap
+	]
+
 	if (!isNaN(x)) {
 		return Number(x)
 	} else if (/^[+-[0-9][0-9]+-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(x)) {
@@ -273,7 +296,7 @@ function correctType(x: any): any {
 		const k = Object.keys(x)
 		const v = Object.values(x)
 		for (let i = 0; i < k.length; i++) {
-			x[k[i]] = bools.includes(k[i]) ? Boolean(v[i]) : correctType(v[i])
+			x[k[i]] = bools.includes(k[i]) ? Boolean(Number(v[i])) : correctType(v[i])
 		}
 	}
 	return x
