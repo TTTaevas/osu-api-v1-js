@@ -154,7 +154,6 @@ export interface Beatmap {
 	 * Star Rating https://osu.ppy.sh/wiki/en/Beatmap/Star_rating
 	 */
 	difficultyrating: number
-	getLength: Function
 }
 
 export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
