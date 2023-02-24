@@ -1,4 +1,8 @@
-export enum Mods { // Directly taken from https://github.com/ppy/osu-api/wiki
+/**
+ * So you can do something like `Mods.Hidden + Mods["HardRock"]` instead of thinking about the bitwise number
+ * (https://github.com/ppy/osu-api/wiki#mods)
+ */
+export enum Mods {
 	None           = 0,
 	NoFail         = 1,
 	Easy           = 2,
@@ -31,17 +35,13 @@ export enum Mods { // Directly taken from https://github.com/ppy/osu-api/wiki
 	Key2           = 268435456,
 	ScoreV2        = 536870912,
 	Mirror         = 1073741824,
-	// KeyMod = Key1 | Key2 | Key3 | Key4 | Key5 | Key6 | Key7 | Key8 | Key9 | KeyCoop,
-	// FreeModAllowed = NoFail | Easy | Hidden | HardRock | SuddenDeath | Flashlight | FadeIn | Relax | Autopilot | SpunOut | KeyMod,
-	// ScoreIncreaseMods = Hidden | HardRock | DoubleTime | Flashlight | FadeIn
 }
 
 /**
  * API returns the SR (and pp stuff) of a Beatmap as 0/null if any of those mods are included.
- * Nightcore would also be featured in this Array, but getBeatmap() circumvents that issue by converting it to DoubleTime!
  */
 export const unsupported_mods = [ // exported only for test.ts, not to be used normally
-	Mods.NoFail, Mods.Hidden, Mods.SpunOut, Mods.FadeIn,
+	Mods.NoFail, Mods.Hidden, Mods.SpunOut, Mods.FadeIn, Mods.Nightcore, // note that Score.enabled_mods, when Nightcore, also has DoubleTime
 	Mods.SuddenDeath, Mods.Perfect,
 	Mods.Relax, Mods.Autoplay, Mods.Autopilot, Mods.Cinema,
 	Mods.Random, Mods.Target, Mods.ScoreV2, Mods.Mirror,

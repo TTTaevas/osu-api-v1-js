@@ -257,6 +257,9 @@ const testBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods, expected: object) =
 		console.log("Expected", expected, "but got", stats)
 		console.error(`The beatmap's stats with the mods ${osu.getMods(mods)} are not what they should be!`)
 		return false
+	} else if (bm.difficultyrating <= 0) {
+		console.error(`The beatmap's star rating with the mods ${osu.getMods(mods)} is 0* or below! (it's ${bm.difficultyrating})`)
+		return false
 	} else {
 		console.log(osu.getMods(mods), "Beatmaps' stats are looking good!")
 		return true

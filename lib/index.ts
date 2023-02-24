@@ -118,8 +118,8 @@ export class API {
 	 */
 	async getBeatmap(beatmap: {beatmap_id: number} | Beatmap, mods?: Mods, mode?: Gamemodes): Promise<Beatmap | APIError> {
 		if (mods === undefined) {mods = Mods.None}
+		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
-		if (getMods(mods).includes(Mods[Mods.Nightcore])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		if (mode === undefined) {mode = Gamemodes.OSU}
 	
 		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}&mode=${mode}&a=1`)
@@ -145,8 +145,8 @@ export class API {
 	since?: Date
 	): Promise<Beatmap[] | APIError> {
 		if (mods === undefined) {mods = Mods.None}
+		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
-		if (getMods(mods).includes(Mods[Mods.Nightcore])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		let lookup = `mods=${mods}`
 		
 		if (beatmap) {
@@ -252,19 +252,19 @@ export class API {
  */
 export enum Gamemodes {
 	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu!
+	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21
 	 */
 	OSU 	= 0,
 	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu!taiko
+	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21taiko
 	 */
 	TAIKO = 1,
 	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu!catch
+	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21catch
 	 */
 	CTB 	= 2,
 	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu!mania
+	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21mania
 	 */
 	MANIA = 3,
 }
