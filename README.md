@@ -63,7 +63,7 @@ await api.getUser({username: "Log Off Now"}, osu.Gamemodes.OSU)
 
 ### await api.getUserScores()
 
-`api.getUserScores()` allows you to get the recent or the best scores of an User by specifying a gamemode, an username or an id, and whether you want their recent scores or their best scores, plus how many scores you want. (from 1 to 100)
+`api.getUserScores()` allows you to get the recent or the best Scores of an User by specifying a Gamemode, an username or an id, and whether you want their recent Scores or their best Scores, plus how many Scores you want. (from 1 to 100)
 
 ```javascript
 // get an array of `Score`s that represent the best 3 scores of the `User` with username "mrekk"
@@ -77,7 +77,7 @@ let scores = await api.getUserScores(user, osu.Gamemodes.TAIKO, "recent", 5)
 
 ### await api.getBeatmap()
 
-`api.getBeatmap()` is a simple function that allows you to get a beatmap simply by specifying its id! You may specify mods or a gamemode.
+`api.getBeatmap()` is a simple function that allows you to get a Beatmap simply by specifying its id! You may specify mods or a gamemode.
 
 ```javascript
 // get a `Beatmap` for id 557821 with no mod and the gamemode the map was made for
@@ -88,7 +88,18 @@ await api.getBeatmap({beatmap_id: 243848}, osu.Mods.Hidden + osu.Mods.DoubleTime
 
 ### await api.getBeatmaps()
 
-TODO
+`api.getBeatmaps()` is a relatively complex function that allows you to get an array of Beatmaps in a number of ways. You will need to specify how many beatmaps (max) should be in the array (can't be over 500) and the gamemode they should be in.
+
+You can specify the id of a beatmapset or of a beatmap, the mods to apply to the Beatmaps, the user that owns the beatmapsets, and you can filter out maps that have been approved/ranked/loved before a specific date, which also filters out beatmaps that have not reached such a state yet.
+
+```javascript
+// get the 5 latest submitted beatmaps
+await api.getBeatmaps(5, osu.Gamemodes.OSU)
+// get all `Beatmap`s with beatmapset id 1932215 (in other words, all of its difficulties)
+await api.getBeatmaps(500, osu.Gamemodes.OSU, {beatmapset_id: 1932215})
+// get all `Beatmap`s of beatmapsets of Sotarks that have been ranked since 2023 and convert them to the taiko gamemode
+await api.getBeatmaps(500, osu.Gamemodes.TAIKO, undefined, undefined, {username: "Sotarks"}, new Date("2023"))
+```
 
 ### await api.getBeatmapScores()
 
@@ -128,4 +139,28 @@ await api.getReplay(osu.Gamemodes.OSU, {user: {user_id: 124493}, beatmap: {beatm
 let user = await api.getUser({user_id: 124493}, osu.Gamemodes.OSU)
 let beatmap = await api.getBeatmap({beatmap_id: 129891})
 let replay = await api.getReplay(osu.Gamemodes.OSU, {user, beatmap, osu.Mods.Hidden + osu.Mods.HardRock})
+```
+
+## Convenient functions
+
+Outside of the API class, and of the Mods and Gamemodes enums, are functions made to make your life easier if you're ever in need of them!
+
+### getMods()
+
+`getMods()` allows you to get an array of strings, each string being a mod, by giving it a number that corresponds to the mods.
+
+```javascript
+// Log the mods used in each of the top 100 scores on beatmap of id 243848
+let scores = await api.getBeatmapScores(243848, osu.Gamemodes.OSU)
+scores.forEach((s) => console.log(getMods(s.enabled_mods))) // Hidden,HardRock,FlashLight (for 1st iteration)
+```
+
+### getLength()
+
+`getLength()` converts seconds to a string in m:ss format, which can be useful if used to read a Beatmap's length
+
+```javascript
+// Log the length of beatmap of id 557821
+let beatmap = await api.getBeatmap({beatmap_id: 557821})
+console.log(getLength(beatmap.total_length)) // 3:27
 ```
