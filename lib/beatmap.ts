@@ -62,11 +62,11 @@ export interface Beatmap {
 	 */
 	approved: number
 	/**
-	 * In seconds. Feel free to use the `getLength` function attached to this object to have the length in a "m:ss" format!
+	 * The length of the beatmap in seconds **with** the breaks
 	 */
 	total_length: number
 	/**
-	 * In seconds. Feel free to use the `getLength` function attached to this object to have the length in a "m:ss" format!
+	 * The length of the beatmap in seconds **without** the breaks
 	 */
 	hit_length: number
 	/**
