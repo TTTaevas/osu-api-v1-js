@@ -162,6 +162,14 @@ export interface Beatmap {
 	difficultyrating: number
 }
 
+/**
+ * This function returns a Beatmap with properties adjusted to the chosen Mods without making a request to the servers. The properties are namely: 
+ * `total_length`, `hit_length`, `bpm`, `diff_size`, `diff_approach`, `diff_overall`, `diff_drain`
+ * @remarks NOTE THAT THIS FUNCTION DOESN'T ADJUST `diff_aim`, `diff_speed` OR `difficultyrating`, USE `getBeatmap()` FOR THAT
+ * @param beatmap The Beatmap to adapt
+ * @param mods The Mods to which the Beatmap will be adapted
+ * @returns The Beatmap, but adjusted to the Mods
+ */
 export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
 	beatmap = Object.assign({}, beatmap) // Do not change the original Beatmap outside this function
 	const arr = getMods(mods)

@@ -11,8 +11,11 @@ export {Beatmap, Categories, Genres, Languages, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string
-	constructor(m: string) {
-		this.message = m
+	/**
+	 * @param message The reason why things didn't go as expected
+	 */
+	constructor(message: string) {
+		this.message = message
 	}
 }
 
@@ -78,16 +81,16 @@ export class API {
 	}
 
 	/**
-	 * @param search An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
+	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param mode The `User`'s `Gamemode`
 	 * @returns A Promise with a `User` found with the search
 	 */
-	async getUser(search: {user_id?: number, username?: string} | User, mode: Gamemodes): Promise<User | APIError> {
-		if (!search.user_id && !search.username) {return new APIError("No proper `search` argument was given")}
-		let lookup = search.user_id !== undefined ? `u=${search.user_id}&type=id` : `u=${search.username}&type=string`
+	async getUser(user: {user_id?: number, username?: string} | User, mode: Gamemodes): Promise<User | APIError> {
+		if (!user.user_id && !user.username) {return new APIError("No proper `search` argument was given")}
+		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
 		let response = await this.request("get_user", `${lookup}&m=${mode}`)
-		if (!response[0]) {return new APIError(`No User could be found (user_id: ${search.user_id} | username: ${search.username})`)}
+		if (!response[0]) {return new APIError(`No User could be found (user_id: ${user.user_id} | username: ${user.username})`)}
 		return correctType(response[0]) as User
 	}
 
@@ -111,7 +114,7 @@ export class API {
 
 	/**
 	 * Look for and get a singular `Beatmap` with this!
-	 * @param beatmap An Ibject with the ID of the difficulty/`Beatmap` of the beatmapset
+	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
 	 * @param mode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
 	 * @returns A Promise with a `Beatmap`
@@ -184,22 +187,22 @@ export class API {
 	}
 
 	/**
-	 * @param diff_id The ID of the difficulty/beatmap of the beatmapset
+	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
 	 * @param mode A number representing the `Scores`' `Gamemode`
 	 * @param user The `Scores`' user, which is an Object with either a `user_id` or a `username`
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod)
 	 * @param limit The maximum number of `Scores` to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set on a beatmap
 	 */
-	async getBeatmapScores(diff_id: number, mode: Gamemodes, user?: {user_id?: number, username?: string} | User, mods?: Mods, limit?: number): Promise<Score[] | APIError> {
+	async getBeatmapScores(beatmap: {beatmap_id: number} | Beatmap, mode: Gamemodes, user?: {user_id?: number, username?: string} | User, mods?: Mods, limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
 		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
 		let user_lookup = user ? user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string` : ""
 		
-		let response = await this.request("get_scores", `b=${diff_id}&m=${mode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit || 100}`)
+		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${mode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit || 100}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
-		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${diff_id})`)}
+		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${beatmap.beatmap_id})`)}
 	
 		return scores
 	}

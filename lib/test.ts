@@ -151,7 +151,7 @@ const testModdedBeatmap: () => Promise<Boolean> = async (): Promise<Boolean> => 
 const testGetBeatmapScores: () => Promise<Boolean> = async (): Promise<Boolean> => {
 	const score_amount = 132408001
 	process.stdout.write("\nRequesting scores from a normal Beatmap: ")
-	let scores = await api.getBeatmapScores(129891, osu.Gamemodes.OSU, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
+	let scores = await api.getBeatmapScores({beatmap_id: 129891}, osu.Gamemodes.OSU, {user_id: 124493}, osu.Mods.Hidden + osu.Mods.HardRock)
 	if (scores instanceof osu.APIError) {
 		console.error(`Got an APIError: ${scores.message}`)
 		return false
@@ -163,7 +163,7 @@ const testGetBeatmapScores: () => Promise<Boolean> = async (): Promise<Boolean> 
 		return false
 	}
 	process.stdout.write("Requesting scores from a bad Beatmap: ")
-	if (!(await api.getBeatmapScores(bad_id, osu.Gamemodes.OSU) instanceof osu.APIError)) {
+	if (!(await api.getBeatmapScores({beatmap_id: bad_id}, osu.Gamemodes.OSU) instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting scores from a bad Beatmap")
 		return false
 	}
