@@ -81,11 +81,11 @@ export class API {
 	}
 
 	/**
-	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param mode The `User`'s `Gamemode`
+	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @returns A Promise with a `User` found with the search
 	 */
-	async getUser(user: {user_id?: number, username?: string} | User, mode: Gamemodes): Promise<User | APIError> {
+	async getUser(mode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User | APIError> {
 		if (!user.user_id && !user.username) {return new APIError("No proper `search` argument was given")}
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
@@ -95,13 +95,13 @@ export class API {
 	}
 
 	/**
-	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param mode The `User`'s `Gamemode`
+	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param plays The `User`'s top pp plays/`Scores` or the `User`'s plays/`Scores` within the last 24 hours
 	 * @param limit The maximum number of Scores to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set by the `User` in a specific `Gamemode`
 	 */
-	async getUserScores(user: {user_id?: number, username?: string} | User, mode: Gamemodes, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
+	async getUserScores(mode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
@@ -187,14 +187,14 @@ export class API {
 	}
 
 	/**
-	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
 	 * @param mode A number representing the `Scores`' `Gamemode`
+	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
 	 * @param user The `Scores`' user, which is an Object with either a `user_id` or a `username`
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod)
 	 * @param limit The maximum number of `Scores` to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set on a beatmap
 	 */
-	async getBeatmapScores(beatmap: {beatmap_id: number} | Beatmap, mode: Gamemodes, user?: {user_id?: number, username?: string} | User, mods?: Mods, limit?: number): Promise<Score[] | APIError> {
+	async getBeatmapScores(mode: Gamemodes, beatmap: {beatmap_id: number} | Beatmap, user?: {user_id?: number, username?: string} | User, mods?: Mods, limit?: number): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
 		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
