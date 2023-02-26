@@ -5,8 +5,6 @@ jobs:
   test:
     name: Setup and test
     runs-on: ubuntu-latest
-    env:
-      KEY: ${{ vars.KEY }}
 
     strategy:
       matrix:
@@ -14,6 +12,16 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
+    - name: Sets env vars (normal)
+      run: |
+        echo "KEY=${{ vars.KEY }}" >> $GITHUB_ENV
+      if: ${{ github.actor != 'dependabot[bot]' }}
+
+    - name: Sets env vars (dependabot)
+      run: |
+        echo "KEY=${{ secrets.KEY }}" >> $GITHUB_ENV
+      if: ${{ github.actor == 'dependabot[bot]' }}
+
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
