@@ -1,3 +1,23 @@
+/**
+ * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#team-mode-gameplay
+ */
+export enum MultiplayerModes {
+	"HEAD TO HEAD" = 0,
+	"TAG CO-OP" 	 = 1,
+	"TEAM VS" 		 = 2,
+	"TAG TEAM VS"  = 3,
+}
+
+/**
+ * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#win-condition
+ */
+export enum WinConditions {
+	SCORE 		 = 0,
+	ACCURACY 	 = 1,
+	COMBO 		 = 2,
+	"SCORE V2" = 3,
+}
+
 export interface Match {
 	/**
 	 * Has the info about the match that is not related to what's been played

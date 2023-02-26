@@ -1,5 +1,3 @@
-import { getMods, Mods } from "./index"
-
 /**
  * For the `approved` of a `Beatmap` (for example, `Categories[beatmap.approved]` would return "RANKED" if 1) https://osu.ppy.sh/wiki/en/Beatmap/Category
  */
@@ -160,57 +158,4 @@ export interface Beatmap {
 	 * Star Rating https://osu.ppy.sh/wiki/en/Beatmap/Star_rating
 	 */
 	difficultyrating: number
-}
-
-/**
- * This function returns a Beatmap with properties adjusted to the chosen Mods without making a request to the servers. The properties are namely: 
- * `total_length`, `hit_length`, `bpm`, `diff_size`, `diff_approach`, `diff_overall`, `diff_drain`
- * @remarks NOTE THAT THIS FUNCTION DOESN'T ADJUST `diff_aim`, `diff_speed` OR `difficultyrating`, USE `getBeatmap()` FOR THAT
- * @param beatmap The Beatmap to adapt
- * @param mods The Mods to which the Beatmap will be adapted
- * @returns The Beatmap, but adjusted to the Mods
- */
-export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
-	beatmap = Object.assign({}, beatmap) // Do not change the original Beatmap outside this function
-	const arr = getMods(mods)
-	const convertARtoMS = (ar: number) => {
-		ar *= 10
-		let ms = 1800 // AR 0's ms
-		for (let i = 0; i < ar; i++) {ms -= i >= 50 ? 15 : 12}
-		return ms
-	}
-
-	if (arr.includes("Easy")) {
-		beatmap.diff_size /= 2
-		beatmap.diff_approach /= 2
-		beatmap.diff_overall /= 2
-		beatmap.diff_drain /= 2
-	}
-
-	if (arr.includes("HardRock")) {
-		beatmap.diff_size = Math.min(10, beatmap.diff_size * 1.3)
-		beatmap.diff_approach = Math.min(10, beatmap.diff_approach * 1.4)
-		beatmap.diff_overall = Math.min(10, beatmap.diff_overall * 1.4)
-		beatmap.diff_drain = Math.min(10, beatmap.diff_drain * 1.4)
-	}
-
-	if (arr.includes("DoubleTime") || arr.includes("Nightcore")) {
-		beatmap.total_length /= 1.5
-		beatmap.hit_length /= 1.5
-		beatmap.bpm *= 1.5
-		beatmap.diff_approach = (1950 - (convertARtoMS(beatmap.diff_approach) / 1.5)) / 150
-		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 1.5)) / 6
-	}
-
-	if (arr.includes("HalfTime")) {
-		beatmap.total_length /= 0.75
-		beatmap.hit_length /= 0.75
-		beatmap.bpm *= 0.75
-		beatmap.diff_approach = beatmap.diff_approach > 7 ? 
-		(1950 - (convertARtoMS(beatmap.diff_approach) / 0.75)) / 150 :
-		(1800 - (convertARtoMS(beatmap.diff_approach) / 0.75)) / 120 // :skull:
-		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 0.75)) / 6
-	}
-
-	return beatmap
 }

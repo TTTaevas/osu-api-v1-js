@@ -1,13 +1,16 @@
 import axios, { AxiosError, AxiosResponse } from "axios"
 import { User } from "./user"
 import { Score } from "./score"
-import { adjustBeatmapStatsToMods, Beatmap, Categories, Genres, Languages } from "./beatmap"
-import { Match } from "./match"
+import { Beatmap, Categories, Genres, Languages } from "./beatmap"
+import { Match, MultiplayerModes, WinConditions } from "./match"
 import { Mods, unsupported_mods } from "./mods"
 import { Replay } from "./replay"
+import { Gamemodes, getMods, getLength, adjustBeatmapStatsToMods } from "./misc"
 
-export {User, Score, Match, Mods, Replay}
-export {Beatmap, Categories, Genres, Languages, adjustBeatmapStatsToMods}
+export {Gamemodes, User, Score, Mods, Replay}
+export {Beatmap, Categories, Genres, Languages}
+export {Match, MultiplayerModes, WinConditions}
+export {getMods, getLength, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string
@@ -251,79 +254,6 @@ export class API {
 }
 
 /**
- * https://osu.ppy.sh/wiki/en/Game_mode
- */
-export enum Gamemodes {
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21
-	 */
-	OSU 	= 0,
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21taiko
-	 */
-	TAIKO = 1,
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21catch
-	 */
-	CTB 	= 2,
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21mania
-	 */
-	MANIA = 3,
-}
-
-/**
- * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#team-mode-gameplay
- */
-export enum MultiplayerModes {
-	"HEAD TO HEAD" = 0,
-	"TAG CO-OP" 	 = 1,
-	"TEAM VS" 		 = 2,
-	"TAG TEAM VS"  = 3,
-}
-
-/**
- * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#win-condition
- */
-export enum WinConditions {
-	SCORE 		 = 0,
-	ACCURACY 	 = 1,
-	COMBO 		 = 2,
-	"SCORE V2" = 3,
-}
-
-/**
- * @param value A number representing the `Mods`
- * @returns An Array of Strings, each string representing a mod
- */
-export function getMods(value: Mods): string[] {
-	let arr: string[] = []
-	for (let bit = 1; bit != 0; bit <<= 1) { 
-		if ((value & bit) != 0 && bit in Mods) {arr.push(Mods[bit])}
-	}
-	return arr
-}
-
-/**
- * This function exists in case you need help getting a Beatmap's length in a readable way
- * @param seconds A number of seconds
- * @returns A String that represents `seconds` in format m:ss (with support for hours if needed)
- */
-export function getLength(seconds: number): string {
-	let h: string | number = 0
-	let m: string | number = 0
-	let s: string | number = 0
-	
-	while (seconds >= 3600) {h += 1; seconds -= 3600}
-	while (seconds >= 60) {m += 1; seconds -= 60}
-	if (m < 10 && h > 0) {m = `0${m}`}
-	while (seconds >= 1) {s += 1; seconds -= 1}
-	if (s < 10) {s = `0${s}`}
-	
-	return `${h > 0 ? `${h}:` : ""}${m}:${s}`
-}
-
-/**
  * *Almost* **everything** in the JSONs the API returns is a string, this function fixes that
  * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
  * @returns x, but with it (or what it contains) now having the correct type
@@ -340,7 +270,7 @@ function correctType(x: any): any {
 	]
 
 	if (!isNaN(x)) {
-		return Number(x)
+		return x === null ? null : Number(x)
 	} else if (/^[+-[0-9][0-9]+-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(x)) {
 		return new Date(x + "Z") // add Z to string to specify it's UTC
 	} else if (Array.isArray(x)) {
