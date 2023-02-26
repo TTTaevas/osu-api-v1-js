@@ -56,9 +56,9 @@ logUserTopPlayBeatmap("Doomsday fanboy")
 
 ```javascript
 // get an `User` for id 7276846 and for the Taiko gamemode
-await api.getUser({user_id: 7276846}, osu.Gamemodes.TAIKO)
+await api.getUser(osu.Gamemodes.TAIKO, {user_id: 7276846})
 // get an `User` for username "Log Off Now" and for the osu! gamemode
-await api.getUser({username: "Log Off Now"}, osu.Gamemodes.OSU)
+await api.getUser(osu.Gamemodes.OSU, {username: "Log Off Now"})
 ```
 
 ### await api.getUserScores()
@@ -67,12 +67,12 @@ await api.getUser({username: "Log Off Now"}, osu.Gamemodes.OSU)
 
 ```javascript
 // get an array of `Score`s that represent the best 3 scores of the `User` with username "mrekk"
-await api.getUserScores({username: "mrekk"}, osu.Gamemodes.OSU, "best", 3)
+await api.getUserScores(osu.Gamemodes.OSU, {username: "mrekk"}, "best", 3)
 
 // get an `User` for id 7276846 and for the Taiko gamemode
-let user = await api.getUser({user_id: 7276846}, osu.Gamemodes.TAIKO)
+let user = await api.getUser(osu.Gamemodes.TAIKO, {user_id: 7276846})
 // get that `User`'s 5 recent `Score`s
-let scores = await api.getUserScores(user, osu.Gamemodes.TAIKO, "recent", 5)
+let scores = await api.getUserScores(osu.Gamemodes.TAIKO, user, "recent", 5)
 ```
 
 ### await api.getBeatmap()
@@ -107,12 +107,12 @@ await api.getBeatmaps(500, osu.Gamemodes.TAIKO, undefined, undefined, {username:
 
 ```javascript
 // get an array of `Score`s that represent the best 100 (max) scores on beatmap with id 243848 on the osu! gamemode
-await api.getBeatmapScores(243848, osu.Gamemodes.OSU)
+await api.getBeatmapScores(osu.Gamemodes.OSU, {beatmap_id: 243848})
 // get an array of `Score`s that represent the best 5 (max) scores on beatmap with id 243848 with flashlight on the ctb gamemode
-await api.getBeatmapScores(243848, osu.Gamemodes.CTB, osu.Mods.Flashlight, undefined, 5)
+await api.getBeatmapScores(osu.Gamemodes.CTB, {beatmap_id: 243848}, osu.Mods.Flashlight, undefined, 5)
 // get an array of `Score`s that represent the best 100 (max) scores on beatmap with id 932936 from user with id 7276846 on the osu! gamemode
 // don't do it IRL
-await api.getBeatmapScores(932936, osu.Gamemodes.OSU, undefined, {user_id: 7276846}, 100)
+await api.getBeatmapScores(osu.Gamemodes.OSU, {beatmap_id: 932936}, undefined, {user_id: 7276846}, 100)
 ```
 
 ### await api.getMatch()
@@ -136,7 +136,7 @@ await api.getReplay(osu.Gamemodes.OSU, {score_id: 2177560145})
 // get a `Replay` for user id 124493, beatmap id 129891, with mods HDHR
 await api.getReplay(osu.Gamemodes.OSU, {user: {user_id: 124493}, beatmap: {beatmap_id: 129891}, osu.Mods.Hidden + osu.Mods.HardRock})
 // same as above!
-let user = await api.getUser({user_id: 124493}, osu.Gamemodes.OSU)
+let user = await api.getUser(osu.Gamemodes.OSU, {user_id: 124493})
 let beatmap = await api.getBeatmap({beatmap_id: 129891})
 let replay = await api.getReplay(osu.Gamemodes.OSU, {user, beatmap, osu.Mods.Hidden + osu.Mods.HardRock})
 ```
@@ -151,7 +151,7 @@ Outside of the API class, and of the Mods and Gamemodes enums, are functions mad
 
 ```javascript
 // Log the mods used in each of the top 100 scores on beatmap of id 243848
-let scores = await api.getBeatmapScores(243848, osu.Gamemodes.OSU)
+let scores = await api.getBeatmapScores(osu.Gamemodes.OSU, {beatmap_id: 243848})
 scores.forEach((s) => console.log(getMods(s.enabled_mods))) // Hidden,HardRock,FlashLight (for 1st iteration)
 ```
 
