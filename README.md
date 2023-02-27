@@ -94,11 +94,11 @@ You can specify the id of a beatmapset or of a beatmap, the mods to apply to the
 
 ```javascript
 // get the 5 latest submitted beatmaps
-await api.getBeatmaps(5, osu.Gamemodes.OSU)
+await api.getBeatmaps(5, {gamemode: "all"})
 // get all `Beatmap`s with beatmapset id 1932215 (in other words, all of its difficulties)
-await api.getBeatmaps(500, osu.Gamemodes.OSU, {beatmapset_id: 1932215})
+await api.getBeatmaps(500, {gamemode: osu.Gamemodes.OSU}, {beatmapset_id: 1932215})
 // get all `Beatmap`s of beatmapsets of Sotarks that have been ranked since 2023 and convert them to the taiko gamemode
-await api.getBeatmaps(500, osu.Gamemodes.TAIKO, undefined, undefined, {username: "Sotarks"}, new Date("2023"))
+await api.getBeatmaps(500, {gamemode: osu.Gamemodes.TAIKO, allow_converts: true}, undefined, undefined, {username: "Sotarks"}, new Date("2023"))
 ```
 
 ### await api.getBeatmapScores()
