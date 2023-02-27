@@ -98,18 +98,18 @@ export class API {
 	}
 
 	/**
+	 * @param limit The maximum number of Scores to get, **cannot exceed 100**
 	 * @param mode The `User`'s `Gamemode`
 	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param plays The `User`'s top pp plays/`Scores` or the `User`'s plays/`Scores` within the last 24 hours
-	 * @param limit The maximum number of Scores to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set by the `User` in a specific `Gamemode`
 	 */
-	async getUserScores(mode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
+	async getUserScores(limit: number, mode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent"): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
-		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${mode}&limit=${limit || 100}`)
+		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${mode}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (user_id: ${user.user_id} | username: ${user.username})`)}
 		return scores
@@ -136,7 +136,7 @@ export class API {
 
 	/**
 	 * Look for and get `Beatmap`s with this! Returns an `APIError` if the array would be empty
-	 * @param limit (max is 500) The maximum amount of `Beatmap`s there should be in the array
+	 * @param limit The maximum number of `Beatmap`s there should be in the array, **cannot exceed 500**
 	 * @param mode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
 	 * @param beatmap Will look for its `beatmapset_id` (if undefined, its `beatmap_id` (if undefined, its `file_md5`))
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
@@ -190,20 +190,20 @@ export class API {
 	}
 
 	/**
+	 * @param limit The maximum number of `Scores` to get, **cannot exceed 100**
 	 * @param mode A number representing the `Scores`' `Gamemode`
 	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
 	 * @param user The `Scores`' user, which is an Object with either a `user_id` or a `username`
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod)
-	 * @param limit The maximum number of `Scores` to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set on a beatmap
 	 */
-	async getBeatmapScores(mode: Gamemodes, beatmap: {beatmap_id: number} | Beatmap, user?: {user_id?: number, username?: string} | User, mods?: Mods, limit?: number): Promise<Score[] | APIError> {
+	async getBeatmapScores(limit: number, mode: Gamemodes, beatmap: {beatmap_id: number} | Beatmap, user?: {user_id?: number, username?: string} | User, mods?: Mods): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
 		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
 		let user_lookup = user ? user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string` : ""
 		
-		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${mode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit || 100}`)
+		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${mode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${beatmap.beatmap_id})`)}
 	
