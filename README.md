@@ -22,7 +22,7 @@ const osu = require("osu-api-v1-js")
 const api = new osu.API("<your_key>")
 
 async function logUserTopPlayBeatmap(username) {
-	let scores = await api.getUserScores({username}, osu.Gamemodes.OSU, "best", 1)
+	let scores = await api.getUserScores(1, osu.Gamemodes.OSU, {username}, "best")
 	if (scores instanceof osu.APIError) {throw new Error(scores.message)}
 	let beatmap = await api.getBeatmap({beatmap_id: scores[0].beatmap_id}, scores[0].enabled_mods)
 	if (beatmap instanceof osu.APIError) {throw new Error(beatmap.message)}
@@ -67,12 +67,12 @@ await api.getUser(osu.Gamemodes.OSU, {username: "Log Off Now"})
 
 ```javascript
 // get an array of `Score`s that represent the best 3 scores of the `User` with username "mrekk"
-await api.getUserScores(osu.Gamemodes.OSU, {username: "mrekk"}, "best", 3)
+await api.getUserScores(3, osu.Gamemodes.OSU, {username: "mrekk"}, "best")
 
 // get an `User` for id 7276846 and for the Taiko gamemode
 let user = await api.getUser(osu.Gamemodes.TAIKO, {user_id: 7276846})
 // get that `User`'s 5 recent `Score`s
-let scores = await api.getUserScores(osu.Gamemodes.TAIKO, user, "recent", 5)
+let scores = await api.getUserScores(5, osu.Gamemodes.TAIKO, user, "recent")
 ```
 
 ### await api.getBeatmap()
@@ -94,11 +94,11 @@ You can specify the id of a beatmapset or of a beatmap, the mods to apply to the
 
 ```javascript
 // get the 5 latest submitted beatmaps
-await api.getBeatmaps(5, osu.Gamemodes.OSU)
+await api.getBeatmaps(5, {gamemode: "all"})
 // get all `Beatmap`s with beatmapset id 1932215 (in other words, all of its difficulties)
-await api.getBeatmaps(500, osu.Gamemodes.OSU, {beatmapset_id: 1932215})
+await api.getBeatmaps(500, {gamemode: osu.Gamemodes.OSU}, {beatmapset_id: 1932215})
 // get all `Beatmap`s of beatmapsets of Sotarks that have been ranked since 2023 and convert them to the taiko gamemode
-await api.getBeatmaps(500, osu.Gamemodes.TAIKO, undefined, undefined, {username: "Sotarks"}, new Date("2023"))
+await api.getBeatmaps(500, {gamemode: osu.Gamemodes.TAIKO, allow_converts: true}, undefined, undefined, {username: "Sotarks"}, new Date("2023"))
 ```
 
 ### await api.getBeatmapScores()
@@ -107,12 +107,12 @@ await api.getBeatmaps(500, osu.Gamemodes.TAIKO, undefined, undefined, {username:
 
 ```javascript
 // get an array of `Score`s that represent the best 100 (max) scores on beatmap with id 243848 on the osu! gamemode
-await api.getBeatmapScores(osu.Gamemodes.OSU, {beatmap_id: 243848})
+await api.getBeatmapScores(100, osu.Gamemodes.OSU, {beatmap_id: 243848})
 // get an array of `Score`s that represent the best 5 (max) scores on beatmap with id 243848 with flashlight on the ctb gamemode
-await api.getBeatmapScores(osu.Gamemodes.CTB, {beatmap_id: 243848}, osu.Mods.Flashlight, undefined, 5)
+await api.getBeatmapScores(5, osu.Gamemodes.CTB, {beatmap_id: 243848}, osu.Mods.Flashlight, undefined)
 // get an array of `Score`s that represent the best 100 (max) scores on beatmap with id 932936 from user with id 7276846 on the osu! gamemode
 // don't do it IRL
-await api.getBeatmapScores(osu.Gamemodes.OSU, {beatmap_id: 932936}, undefined, {user_id: 7276846}, 100)
+await api.getBeatmapScores(100, osu.Gamemodes.OSU, {beatmap_id: 932936}, undefined, {user_id: 7276846})
 ```
 
 ### await api.getMatch()
@@ -151,16 +151,26 @@ Outside of the API class, and of the Mods and Gamemodes enums, are functions mad
 
 ```javascript
 // Log the mods used in each of the top 100 scores on beatmap of id 243848
-let scores = await api.getBeatmapScores(osu.Gamemodes.OSU, {beatmap_id: 243848})
+let scores = await api.getBeatmapScores(100, osu.Gamemodes.OSU, {beatmap_id: 243848})
 scores.forEach((s) => console.log(getMods(s.enabled_mods))) // Hidden,HardRock,FlashLight (for 1st iteration)
 ```
 
 ### getLength()
 
-`getLength()` converts seconds to a string in m:ss format, which can be useful if used to read a Beatmap's length
+`getLength()` converts seconds to a string in m:ss format, which can be useful if used to read a Beatmap's length.
 
 ```javascript
 // Log the length of beatmap of id 557821
 let beatmap = await api.getBeatmap({beatmap_id: 557821})
 console.log(getLength(beatmap.total_length)) // 3:27
+```
+
+### adjustBeatmapStatsToMods()
+
+`adjustBeatmapStatsToMods()` adjusts the CS, AR, OD, HP, Length and BPM of a map to one or multiple mods, without making a request to the API servers.
+
+```javascript
+// Adjust beatmap of id 557821 to HRDT
+let beatmap_nm = await api.getBeatmap({beatmap_id: 557821}) //.diff_size = 4 (circle size / CS)
+let beatmap_hr = adjustBeatmapToMods(beatmap_nm, osu.Mods.HardRock + osu.Mods.DoubleTime) //.diff_size = 5.2 (circle size / CS)
 ```

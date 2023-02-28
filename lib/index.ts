@@ -1,13 +1,16 @@
 import axios, { AxiosError, AxiosResponse } from "axios"
 import { User } from "./user"
 import { Score } from "./score"
-import { adjustBeatmapStatsToMods, Beatmap, Categories, Genres, Languages } from "./beatmap"
-import { Match } from "./match"
+import { Beatmap, Categories, Genres, Languages } from "./beatmap"
+import { Match, MultiplayerModes, WinConditions } from "./match"
 import { Mods, unsupported_mods } from "./mods"
 import { Replay } from "./replay"
+import { Gamemodes, getMods, getLength, adjustBeatmapStatsToMods } from "./misc"
 
-export {User, Score, Match, Mods, Replay}
-export {Beatmap, Categories, Genres, Languages, adjustBeatmapStatsToMods}
+export {Gamemodes, User, Score, Mods, Replay}
+export {Beatmap, Categories, Genres, Languages}
+export {Match, MultiplayerModes, WinConditions}
+export {getMods, getLength, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string
@@ -95,18 +98,18 @@ export class API {
 	}
 
 	/**
-	 * @param mode The `User`'s `Gamemode`
+	 * @param limit The maximum number of Scores to get, **cannot exceed 100**
+	 * @param gamemode The `User`'s `Gamemode`
 	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @param plays The `User`'s top pp plays/`Scores` or the `User`'s plays/`Scores` within the last 24 hours
-	 * @param limit The maximum number of Scores to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set by the `User` in a specific `Gamemode`
 	 */
-	async getUserScores(mode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent", limit?: number): Promise<Score[] | APIError> {
+	async getUserScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent"): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
-		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${mode}&limit=${limit || 100}`)
+		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${gamemode}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (user_id: ${user.user_id} | username: ${user.username})`)}
 		return scores
@@ -116,16 +119,16 @@ export class API {
 	 * Look for and get a singular `Beatmap` with this!
 	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
-	 * @param mode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
+	 * @param gamemode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
 	 * @returns A Promise with a `Beatmap`
 	 */
-	async getBeatmap(beatmap: {beatmap_id: number} | Beatmap, mods?: Mods, mode?: Gamemodes): Promise<Beatmap | APIError> {
+	async getBeatmap(beatmap: {beatmap_id: number} | Beatmap, mods?: Mods, gamemode?: Gamemodes): Promise<Beatmap | APIError> {
 		if (mods === undefined) {mods = Mods.None}
 		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
-		if (mode === undefined) {mode = Gamemodes.OSU}
+		if (gamemode === undefined) {gamemode = Gamemodes.OSU}
 	
-		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}&mode=${mode}&a=1`)
+		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}&mode=${gamemode}&a=1`)
 		if (!response[0]) {return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id})`)}
 
 		return adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
@@ -133,15 +136,15 @@ export class API {
 
 	/**
 	 * Look for and get `Beatmap`s with this! Returns an `APIError` if the array would be empty
-	 * @param limit (max is 500) The maximum amount of `Beatmap`s there should be in the array
-	 * @param mode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
+	 * @param limit The maximum number of `Beatmap`s there should be in the array, **cannot exceed 500**
+	 * @param gamemode Filter in the beatmaps by the gamemode (unless "all"), if `allow_converts` then instead convert if possible the beatmaps to that gamemode
 	 * @param beatmap Will look for its `beatmapset_id` (if undefined, its `beatmap_id` (if undefined, its `file_md5`))
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
 	 * @param set_owner The `User` that owns the beatmapset
 	 * @param since Filters out any `Beatmap` of `Category < 0`, and any `Beatmap` with an `approved_date` older than what's given
 	 */
 	async getBeatmaps(
-	limit: number, mode: Gamemodes,
+	limit: number, gamemode: {gamemode: Gamemodes | "all", allow_converts?: boolean},
 	beatmap?: {beatmapset_id?: number, beatmap_id?: number, file_md5?: string} | Beatmap,
 	mods?: Mods,
 	set_owner?: {user_id?: number, username?: string} | User,
@@ -151,6 +154,8 @@ export class API {
 		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
 		let lookup = `mods=${mods}`
+		let mode = gamemode.gamemode == "all" ? "" : `&m=${gamemode.gamemode}`
+		let convert = gamemode.allow_converts ? "a=1" : "a=0"
 		
 		if (beatmap) {
 			if (beatmap.beatmapset_id !== undefined) {
@@ -179,7 +184,7 @@ export class API {
 			lookup += x.substring(0, x.indexOf("Z") - 4)
 		}
 
-		let response = await this.request("get_beatmaps", `limit=${limit}&m=${mode}&a=1${lookup}`)
+		let response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`)
 		if (!response[0]) {return new APIError(`No Beatmap could be found`)}
 		let beatmaps: Beatmap[] = response.map((b: Beatmap) => adjustBeatmapStatsToMods(correctType(b), mods || Mods.None))
 
@@ -187,20 +192,21 @@ export class API {
 	}
 
 	/**
-	 * @param mode A number representing the `Scores`' `Gamemode`
+	 * @param limit The maximum number of `Scores` to get, **cannot exceed 100**
+	 * @param gamemode A number representing the `Scores`' `Gamemode`
 	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
 	 * @param user The `Scores`' user, which is an Object with either a `user_id` or a `username`
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod)
-	 * @param limit The maximum number of `Scores` to get, cannot exceed 100, defaults to 100
 	 * @returns A Promise with an array of `Scores` set on a beatmap
 	 */
-	async getBeatmapScores(mode: Gamemodes, beatmap: {beatmap_id: number} | Beatmap, user?: {user_id?: number, username?: string} | User, mods?: Mods, limit?: number): Promise<Score[] | APIError> {
+	async getBeatmapScores(limit: number, gamemode: Gamemodes, beatmap: {beatmap_id: number} | Beatmap,
+	user?: {user_id?: number, username?: string} | User, mods?: Mods): Promise<Score[] | APIError> {
 		let scores: Score[] = []
 	
 		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
 		let user_lookup = user ? user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string` : ""
 		
-		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${mode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit || 100}`)
+		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${gamemode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
 		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${beatmap.beatmap_id})`)}
 	
@@ -219,12 +225,12 @@ export class API {
 	
 	/**
 	 * Specify the gamemode the score was set in, then say if you know the id of the `Score` OR if you know the score's `User`, `Beatmap`, and `Mods`
-	 * @param mode A number representing the `Gamemode` the `Score` was set in
+	 * @param gamemode A number representing the `Gamemode` the `Score` was set in
 	 * @param score An Object with a `score_id`, that obviously represents the id of the `Score`
 	 * @param search An Object with stuff regarding the `User`, `Beatmap`, and `Mods`
 	 * @returns If possible, a `Replay` of that `Score`
 	 */
-	async getReplay(mode: Gamemodes, score?: {score_id: number} | Score,
+	async getReplay(gamemode: Gamemodes, score?: {score_id: number} | Score,
 	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}): Promise<Replay | APIError> {
 		let lookup: string
 
@@ -244,83 +250,10 @@ export class API {
 			return new APIError("No proper `score` or `search` argument was given")
 		}
 
-		let response = await this.request("get_replay", `${lookup}&m=${mode}`)
+		let response = await this.request("get_replay", `${lookup}&m=${gamemode}`)
 		if (!response.content) {return new APIError(`No Replay could be found`)}
 		return correctType(response) as Replay
 	}
-}
-
-/**
- * https://osu.ppy.sh/wiki/en/Game_mode
- */
-export enum Gamemodes {
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21
-	 */
-	OSU 	= 0,
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21taiko
-	 */
-	TAIKO = 1,
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21catch
-	 */
-	CTB 	= 2,
-	/**
-	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21mania
-	 */
-	MANIA = 3,
-}
-
-/**
- * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#team-mode-gameplay
- */
-export enum MultiplayerModes {
-	"HEAD TO HEAD" = 0,
-	"TAG CO-OP" 	 = 1,
-	"TEAM VS" 		 = 2,
-	"TAG TEAM VS"  = 3,
-}
-
-/**
- * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#win-condition
- */
-export enum WinConditions {
-	SCORE 		 = 0,
-	ACCURACY 	 = 1,
-	COMBO 		 = 2,
-	"SCORE V2" = 3,
-}
-
-/**
- * @param value A number representing the `Mods`
- * @returns An Array of Strings, each string representing a mod
- */
-export function getMods(value: Mods): string[] {
-	let arr: string[] = []
-	for (let bit = 1; bit != 0; bit <<= 1) { 
-		if ((value & bit) != 0 && bit in Mods) {arr.push(Mods[bit])}
-	}
-	return arr
-}
-
-/**
- * This function exists in case you need help getting a Beatmap's length in a readable way
- * @param seconds A number of seconds
- * @returns A String that represents `seconds` in format m:ss (with support for hours if needed)
- */
-export function getLength(seconds: number): string {
-	let h: string | number = 0
-	let m: string | number = 0
-	let s: string | number = 0
-	
-	while (seconds >= 3600) {h += 1; seconds -= 3600}
-	while (seconds >= 60) {m += 1; seconds -= 60}
-	if (m < 10 && h > 0) {m = `0${m}`}
-	while (seconds >= 1) {s += 1; seconds -= 1}
-	if (s < 10) {s = `0${s}`}
-	
-	return `${h > 0 ? `${h}:` : ""}${m}:${s}`
 }
 
 /**
@@ -340,7 +273,7 @@ function correctType(x: any): any {
 	]
 
 	if (!isNaN(x)) {
-		return Number(x)
+		return x === null ? null : Number(x)
 	} else if (/^[+-[0-9][0-9]+-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(x)) {
 		return new Date(x + "Z") // add Z to string to specify it's UTC
 	} else if (Array.isArray(x)) {
