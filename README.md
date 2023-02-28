@@ -157,10 +157,20 @@ scores.forEach((s) => console.log(getMods(s.enabled_mods))) // Hidden,HardRock,F
 
 ### getLength()
 
-`getLength()` converts seconds to a string in m:ss format, which can be useful if used to read a Beatmap's length
+`getLength()` converts seconds to a string in m:ss format, which can be useful if used to read a Beatmap's length.
 
 ```javascript
 // Log the length of beatmap of id 557821
 let beatmap = await api.getBeatmap({beatmap_id: 557821})
 console.log(getLength(beatmap.total_length)) // 3:27
+```
+
+### adjustBeatmapStatsToMods()
+
+`adjustBeatmapStatsToMods()` adjusts the CS, AR, OD, HP, Length and BPM of a map to one or multiple mods, without making a request to the API servers.
+
+```javascript
+// Adjust beatmap of id 557821 to HRDT
+let beatmap_nm = await api.getBeatmap({beatmap_id: 557821}) //.diff_size = 4 (circle size / CS)
+let beatmap_hr = adjustBeatmapToMods(beatmap_nm, osu.Mods.HardRock + osu.Mods.DoubleTime) //.diff_size = 5.2 (circle size / CS)
 ```
