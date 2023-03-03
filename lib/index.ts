@@ -41,6 +41,7 @@ export class API {
 	 * @returns A Promise with either the API's response or `false` upon failing
 	 */
 	private async request(type: string, params: string, number_try?: number): Promise<AxiosResponse["data"] | false> {
+		const max_tries = 5
 		if (!number_try) {number_try = 1}
 		let to_retry = false
 	
@@ -60,6 +61,11 @@ export class API {
 				if (error.response) {
 					console.log("osu!api v1 ->", error.response.statusText, error.response.status, {type, params})
 					if (error.response.status === 401) console.log("osu!api v1 -> Server responded with status code 401, are you sure you're using a valid API key?")
+					if (error.response.status === 429) {
+						console.log("osu!api v1 -> Server responded with status code 429, you're sending too many requests at once and are getting rate-limited!")
+						if (number_try !== undefined && number_try < max_tries) {console.log(`osu!api v1 -> Will request again in a few instants... (Try #${number_try})`)}
+						to_retry = true
+					}
 				} else if (error.request) {
 					console.log("osu!api v1 ->", "Request made but server did not respond", `(Try #${number_try})`, {type, params})
 					to_retry = true
@@ -75,7 +81,14 @@ export class API {
 			if (this.verbose) console.log("osu!api v1 ->", resp.statusText, resp.status, {type, params})
 			return resp.data
 		} else {
-			if (to_retry && number_try < 5) {
+			/**
+			 * Under specific circumstances, we want to retry our request automatically
+			 * However, spamming the server during the same second in any of these circumstances would be pointless
+			 * So we wait for 1 to 5 seconds to make our request, 5 times maximum
+			 */
+			if (to_retry && number_try < max_tries) {
+				let to_wait = (Math.floor(Math.random() * (500 - 100 + 1)) + 100) * 10
+				await new Promise(res => setTimeout(res, to_wait))
 				return await this.request(type, params, number_try + 1)
 			} else {
 				return false
