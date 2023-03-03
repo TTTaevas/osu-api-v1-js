@@ -139,9 +139,9 @@ export class API {
 		if (mods === undefined) {mods = Mods.None}
 		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
-		if (gamemode === undefined) {gamemode = Gamemodes.OSU}
+		let g = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
 	
-		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}&mode=${gamemode}&a=1`)
+		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}${g}`)
 		if (!response[0]) {
 			return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id}${gamemode !== undefined ? `| gamemode: ${Gamemodes[gamemode]}` : ""})`)
 		}
