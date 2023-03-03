@@ -97,16 +97,16 @@ export class API {
 	}
 
 	/**
-	 * @param mode The `User`'s `Gamemode`
+	 * @param gamemode The `User`'s `Gamemode`
 	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @returns A Promise with a `User` found with the search
 	 */
-	async getUser(mode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User | APIError> {
-		if (!user.user_id && !user.username) {return new APIError("No proper `search` argument was given")}
+	async getUser(gamemode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User | APIError> {
+		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
-		let response = await this.request("get_user", `${lookup}&m=${mode}`)
-		if (!response[0]) {return new APIError(`No User could be found (user_id: ${user.user_id} | username: ${user.username})`)}
+		let response = await this.request("get_user", `${lookup}&m=${gamemode}`)
+		if (!response[0]) {return new APIError(`No User could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
 		return correctType(response[0]) as User
 	}
 
@@ -124,7 +124,7 @@ export class API {
 	
 		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${gamemode}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
-		if (!scores.length) {return new APIError(`No Score could be found (user_id: ${user.user_id} | username: ${user.username})`)}
+		if (!scores.length) {return new APIError(`No ${plays} Score could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
 		return scores
 	}
 
@@ -142,7 +142,9 @@ export class API {
 		if (gamemode === undefined) {gamemode = Gamemodes.OSU}
 	
 		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}&mode=${gamemode}&a=1`)
-		if (!response[0]) {return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id})`)}
+		if (!response[0]) {
+			return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id}${gamemode !== undefined ? `| gamemode: ${Gamemodes[gamemode]}` : ""})`)
+		}
 
 		return adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
 	}
@@ -150,7 +152,7 @@ export class API {
 	/**
 	 * Look for and get `Beatmap`s with this! Returns an `APIError` if the array would be empty
 	 * @param limit The maximum number of `Beatmap`s there should be in the array, **cannot exceed 500**
-	 * @param gamemode Filter in the beatmaps by the gamemode (unless "all"), if `allow_converts` then instead convert if possible the beatmaps to that gamemode
+	 * @param gamemode Filter in the beatmaps by the gamemode (unless "all"), but if `allow_converts` then instead convert if possible the beatmaps to that gamemode
 	 * @param beatmap Will look for its `beatmapset_id` (if undefined, its `beatmap_id` (if undefined, its `file_md5`))
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
 	 * @param set_owner The `User` that owns the beatmapset
@@ -198,7 +200,11 @@ export class API {
 		}
 
 		let response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`)
-		if (!response[0]) {return new APIError(`No Beatmap could be found`)}
+		if (!response[0]) {
+			return new APIError(
+				`No Beatmap could be found (lookup: ${lookup}${gamemode.gamemode !== undefined && gamemode.gamemode !== "all" ? `| gamemode: ${Gamemodes[gamemode.gamemode]}` : ""})`
+			)
+		}
 		let beatmaps: Beatmap[] = response.map((b: Beatmap) => adjustBeatmapStatsToMods(correctType(b), mods || Mods.None))
 
 		return beatmaps
@@ -221,7 +227,9 @@ export class API {
 		
 		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${gamemode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
-		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${beatmap.beatmap_id})`)}
+		if (!scores.length) {
+			return new APIError(`No Score could be found (gamemode: ${Gamemodes[gamemode]} | beatmap_id: ${beatmap.beatmap_id}${user ? `user lookup: ${user}` : ""})`)
+		}
 	
 		return scores
 	}
@@ -232,7 +240,7 @@ export class API {
 	 */
 	async getMatch(id: number): Promise<Match | APIError> {
 		let response = await this.request("get_match", `mp=${id}`)
-		if (!response.match) {return new APIError(`No Match could be found (id: ${id})`)}
+		if (response.match === 0 || response.match === undefined || response.length === 0) {return new APIError(`No Match could be found (id: ${id})`)}
 		return correctType(response) as Match
 	}
 	
@@ -264,7 +272,7 @@ export class API {
 		}
 
 		let response = await this.request("get_replay", `${lookup}&m=${gamemode}`)
-		if (!response.content) {return new APIError(`No Replay could be found`)}
+		if (!response.content) {return new APIError(`No Replay could be found (gamemode: ${Gamemodes[gamemode]} | score lookup: ${lookup})`)}
 		return correctType(response) as Replay
 	}
 }

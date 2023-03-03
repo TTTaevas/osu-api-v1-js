@@ -39,11 +39,15 @@ const testGetUser: () => Promise<Boolean> = async (): Promise<Boolean> => {
 		Got: ${user.user_id}`)
 		return false
 	}
+
 	process.stdout.write("Requesting a bad User: ")
-	if (!(await api.getUser(osu.Gamemodes.MANIA, {user_id: bad_id}) instanceof osu.APIError)) {
+	let bad_user = await api.getUser(osu.Gamemodes.MANIA, {user_id: bad_id})
+	if (!(bad_user instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting a bad User")
 		return false
 	}
+	console.log(`(Bad User message: ${bad_user.message})`)
+
 	return true
 }
 
@@ -64,11 +68,15 @@ const testGetMatch: () => Promise<Boolean> = async (): Promise<Boolean> => {
 		Got: ${match.match.name}`)
 		return false
 	}
+
 	process.stdout.write("Requesting a bad Match: ")
-	if (!(await api.getMatch(bad_id) instanceof osu.APIError)) {
+	let bad_match = await api.getMatch(bad_id)
+	if (!(bad_match instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting a bad Match")
 		return false
 	}
+	console.log(`(Bad Match message: ${bad_match.message})`)
+
 	return true
 }
 
@@ -89,11 +97,15 @@ const testGetBeatmap: () => Promise<Boolean> = async (): Promise<Boolean> => {
 		Got: ${beatmap.title}`)
 		return false
 	}
+
 	process.stdout.write("Requesting a bad Beatmap: ")
-	if (!(await api.getBeatmap({beatmap_id: bad_id}) instanceof osu.APIError)) {
+	let bad_beatmap = await api.getBeatmap({beatmap_id: bad_id})
+	if (!(bad_beatmap instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting a bad Beatmap")
 		return false
 	}
+	console.log(`(Bad Beatmap message: ${bad_beatmap.message})`)
+
 	return true
 }
 
@@ -162,11 +174,15 @@ const testGetBeatmapScores: () => Promise<Boolean> = async (): Promise<Boolean> 
 		Got: ${scores[0].score}`)
 		return false
 	}
+
 	process.stdout.write("Requesting scores from a bad Beatmap: ")
-	if (!(await api.getBeatmapScores(5, osu.Gamemodes.OSU, {beatmap_id: bad_id}) instanceof osu.APIError)) {
+	let bad_beatmap_scores = await api.getBeatmapScores(5, osu.Gamemodes.OSU, {beatmap_id: bad_id})
+	if (!(bad_beatmap_scores instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting scores from a bad Beatmap")
 		return false
 	}
+	console.log(`(Bad Beatmap Scores message: ${bad_beatmap_scores.message})`)
+
 	return true
 }
 
@@ -187,18 +203,24 @@ const testGetUserScores: () => Promise<Boolean> = async (): Promise<Boolean> => 
 		Got: ${scores.length}`)
 		return false
 	}
+
 	process.stdout.write("Requesting the best scores from a bad User: ")
-	if (!(await api.getUserScores(scores_limit, osu.Gamemodes.TAIKO, {user_id: bad_id}, "best") instanceof osu.APIError)) {
+	let bad_user_best_scores = await api.getUserScores(scores_limit, osu.Gamemodes.TAIKO, {user_id: bad_id}, "best")
+	if (!(bad_user_best_scores instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting top scores from a bad User")
 		return false
 	}
+	console.log(`(Bad User Best Scores message: ${bad_user_best_scores.message})`)
 	process.stdout.write("Requesting the recent scores from a normal User: ")
 	await api.getUserScores(scores_limit, osu.Gamemodes.CTB, {user_id: 2}, "recent")
 	process.stdout.write("Requesting the recent scores from a bad User: ")
-	if (!(await api.getUserScores(scores_limit, osu.Gamemodes.MANIA, {user_id: bad_id}, "recent") instanceof osu.APIError)) {
+	let bad_user_recent_scores = await api.getUserScores(scores_limit, osu.Gamemodes.MANIA, {user_id: bad_id}, "recent")
+	if (!(bad_user_recent_scores instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting recent scores from a bad User")
 		return false
 	}
+	console.log(`(Bad User Recent Scores message: ${bad_user_recent_scores.message})`)
+
 	return true
 }
 
@@ -219,11 +241,15 @@ const testGetReplay: () => Promise<Boolean> = async (): Promise<Boolean> => {
 		Got: ${replay.content.length}`)
 		return false
 	}
+
 	process.stdout.write("Requesting the Replay from a bad score: ")
-	if (!(await api.getReplay(osu.Gamemodes.TAIKO, {score_id: bad_id}) instanceof osu.APIError)) {
+	let bad_replay = await api.getReplay(osu.Gamemodes.TAIKO, {score_id: bad_id})
+	if (!(bad_replay instanceof osu.APIError)) {
 		console.error("Expected an APIError upon requesting a bad Replay")
 		return false
 	}
+	console.log(`(Bad Replay message: ${bad_replay.message})`)
+
 	return true
 }
 
