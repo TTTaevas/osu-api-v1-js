@@ -25,13 +25,16 @@ export class APIError {
 export class API {
 	key: string
 	verbose: boolean
+	server: string
 	/**
 	 * @param key Your API key, which you can get at https://osu.ppy.sh/p/api
 	 * @param verbose (default `false`) Whether or not requests should be logged
+	 * @param server (default `https://osu.ppy.sh/api/`) The server where the requests should be sent to
 	 */
-	constructor(key: string, verbose?: boolean) {
+	constructor(key: string, verbose?: boolean, server?: string) {
 		this.key = key
 		this.verbose = verbose || false
+		this.server = server === undefined ? "https://osu.ppy.sh/api/" : server
 	}
 
 	/**
@@ -47,7 +50,7 @@ export class API {
 	
 		const resp = await axios({
 			method: "get",
-			baseURL: "https://osu.ppy.sh/api/",
+			baseURL: this.server,
 			url: `/${type}?k=${this.key}&${params}`,
 			headers: {
 				"Accept": "application/json",
@@ -106,7 +109,7 @@ export class API {
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
 		let response = await this.request("get_user", `${lookup}&m=${gamemode}`)
-		if (!response[0]) {return new APIError(`No User could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
+		if (!response || !response[0]) {return new APIError(`No User could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
 		return correctType(response[0]) as User
 	}
 
@@ -142,7 +145,7 @@ export class API {
 		let g = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
 	
 		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}${g}`)
-		if (!response[0]) {
+		if (!response || !response[0]) {
 			return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id}${gamemode !== undefined ? `| gamemode: ${Gamemodes[gamemode]}` : ""})`)
 		}
 
@@ -200,7 +203,7 @@ export class API {
 		}
 
 		let response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`)
-		if (!response[0]) {
+		if (!response || !response[0]) {
 			return new APIError(
 				`No Beatmap could be found (lookup: ${lookup}${gamemode.gamemode !== undefined && gamemode.gamemode !== "all" ? `| gamemode: ${Gamemodes[gamemode.gamemode]}` : ""})`
 			)
@@ -237,6 +240,8 @@ export class API {
 	/**
 	 * @param id The ID of the `Match`
 	 * @returns A Promise with a `Match`
+	 * @remarks If the API's server is set to `https://ripple.moe/api`, `getMatch` might not work as it's currently unsupported by Ripple,
+	 * see https://docs.ripple.moe/docs/api/peppy
 	 */
 	async getMatch(id: number): Promise<Match | APIError> {
 		let response = await this.request("get_match", `mp=${id}`)
@@ -250,6 +255,8 @@ export class API {
 	 * @param score An Object with a `score_id`, that obviously represents the id of the `Score`
 	 * @param search An Object with stuff regarding the `User`, `Beatmap`, and `Mods`
 	 * @returns If possible, a `Replay` of that `Score`
+	 * @remarks If the API's server is set to `https://ripple.moe/api`, `getReplay` might not work as it's currently unsupported by Ripple,
+	 * see https://docs.ripple.moe/docs/api/peppy
 	 */
 	async getReplay(gamemode: Gamemodes, score?: {score_id: number} | Score,
 	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}): Promise<Replay | APIError> {
@@ -272,7 +279,7 @@ export class API {
 		}
 
 		let response = await this.request("get_replay", `${lookup}&m=${gamemode}`)
-		if (!response.content) {return new APIError(`No Replay could be found (gamemode: ${Gamemodes[gamemode]} | score lookup: ${lookup})`)}
+		if (!response || !response.content) {return new APIError(`No Replay could be found (gamemode: ${Gamemodes[gamemode]} | score lookup: ${lookup})`)}
 		return correctType(response) as Replay
 	}
 }
