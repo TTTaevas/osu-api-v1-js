@@ -1,6 +1,8 @@
 # osu-api-v1-js
 
-**osu-api-v1-js** is a JavaScript & TypeScript package that helps you interact with [osu!api (v1)](https://github.com/ppy/osu-api/wiki).
+[**osu-api-v1-js**](https://github.com/TTTaevas/osu-api-v1-js) is a JavaScript & TypeScript package that helps you interact with [osu!api (v1)](https://github.com/ppy/osu-api/wiki).
+
+You can find detailed documentation on [osu.taevas.xyz](https://osu.taevas.xyz/) if needed!
 
 ## How to install and get started
 
@@ -52,7 +54,7 @@ logUserTopPlayBeatmap("Doomsday fanboy")
 
 ### await api.getUser()
 
-`api.getUser()` allows you to get an User by specifying a gamemode and an username or an id!
+`api.getUser()` allows you to get a User by specifying a gamemode and a username or an id!
 
 ```javascript
 // get an `User` for id 7276846 and for the Taiko gamemode
@@ -63,7 +65,7 @@ await api.getUser(osu.Gamemodes.OSU, {username: "Log Off Now"})
 
 ### await api.getUserScores()
 
-`api.getUserScores()` allows you to get the recent or the best Scores of an User by specifying a Gamemode, an username or an id, and whether you want their recent Scores or their best Scores, plus how many Scores you want. (from 1 to 100)
+`api.getUserScores()` allows you to get the recent or the best Scores of a User by specifying a Gamemode, a username or an id, and whether you want their recent Scores or their best Scores, plus how many Scores you want. (from 1 to 100)
 
 ```javascript
 // get an array of `Score`s that represent the best 3 scores of the `User` with username "mrekk"
@@ -71,7 +73,7 @@ await api.getUserScores(3, osu.Gamemodes.OSU, {username: "mrekk"}, "best")
 
 // get an `User` for id 7276846 and for the Taiko gamemode
 let user = await api.getUser(osu.Gamemodes.TAIKO, {user_id: 7276846})
-// get that `User`'s 5 recent `Score`s
+// get that `User`'s 5 most recent `Score`s
 let scores = await api.getUserScores(5, osu.Gamemodes.TAIKO, user, "recent")
 ```
 
@@ -103,7 +105,7 @@ await api.getBeatmaps(500, {gamemode: osu.Gamemodes.TAIKO, allow_converts: true}
 
 ### await api.getBeatmapScores()
 
-`api.getBeatmapScores()` allows you to get filtered scores that have been set on a specific beatmap and gamemode. You can specify an User, mods, and a maximum amount of scores to get.
+`api.getBeatmapScores()` allows you to get filtered scores that have been set on a specific beatmap and gamemode. You can specify a User, mods, and a maximum amount of scores to get.
 
 ```javascript
 // get an array of `Score`s that represent the best 100 (max) scores on beatmap with id 243848 on the osu! gamemode
@@ -173,4 +175,15 @@ console.log(getLength(beatmap.total_length)) // 3:27
 // Adjust beatmap of id 557821 to HRDT
 let beatmap_nm = await api.getBeatmap({beatmap_id: 557821}) //.diff_size = 4 (circle size / CS)
 let beatmap_hr = adjustBeatmapToMods(beatmap_nm, osu.Mods.HardRock + osu.Mods.DoubleTime) //.diff_size = 5.2 (circle size / CS)
+```
+
+### getURL
+
+`getURL` is an Object with many straight-forward functions that allow you to get an URL to an image (beatmap cover, profile picture...) or an URL that interacts with the osu! game client. (opening osu!direct, spectate a user...)
+
+```javascript
+// Get the URL of a Beatmap's rectangular cover
+let cover = getURL.beatmapCoverImage({beatmapset_id: 1190710})
+// Get the URL that opens osu!direct to a Beatmap
+let beatmap_url = getURL.toOpen.beatmap({beatmap: 1095507})
 ```

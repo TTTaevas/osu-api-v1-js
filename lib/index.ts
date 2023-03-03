@@ -5,12 +5,12 @@ import { Beatmap, Categories, Genres, Languages } from "./beatmap"
 import { Match, MultiplayerModes, WinConditions } from "./match"
 import { Mods, unsupported_mods } from "./mods"
 import { Replay } from "./replay"
-import { Gamemodes, getMods, getLength, adjustBeatmapStatsToMods } from "./misc"
+import { Gamemodes, getMods, getLength, getURL, adjustBeatmapStatsToMods } from "./misc"
 
 export {Gamemodes, User, Score, Mods, Replay}
 export {Beatmap, Categories, Genres, Languages}
 export {Match, MultiplayerModes, WinConditions}
-export {getMods, getLength, adjustBeatmapStatsToMods}
+export {getMods, getLength, getURL, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string
@@ -25,13 +25,16 @@ export class APIError {
 export class API {
 	key: string
 	verbose: boolean
+	server: string
 	/**
 	 * @param key Your API key, which you can get at https://osu.ppy.sh/p/api
 	 * @param verbose (default `false`) Whether or not requests should be logged
+	 * @param server (default `https://osu.ppy.sh/api/`) The server where the requests should be sent to
 	 */
-	constructor(key: string, verbose?: boolean) {
+	constructor(key: string, verbose?: boolean, server?: string) {
 		this.key = key
 		this.verbose = verbose || false
+		this.server = server === undefined ? "https://osu.ppy.sh/api/" : server
 	}
 
 	/**
@@ -41,12 +44,13 @@ export class API {
 	 * @returns A Promise with either the API's response or `false` upon failing
 	 */
 	private async request(type: string, params: string, number_try?: number): Promise<AxiosResponse["data"] | false> {
+		const max_tries = 5
 		if (!number_try) {number_try = 1}
 		let to_retry = false
 	
 		const resp = await axios({
 			method: "get",
-			baseURL: "https://osu.ppy.sh/api/",
+			baseURL: this.server,
 			url: `/${type}?k=${this.key}&${params}`,
 			headers: {
 				"Accept": "application/json",
@@ -60,6 +64,11 @@ export class API {
 				if (error.response) {
 					console.log("osu!api v1 ->", error.response.statusText, error.response.status, {type, params})
 					if (error.response.status === 401) console.log("osu!api v1 -> Server responded with status code 401, are you sure you're using a valid API key?")
+					if (error.response.status === 429) {
+						console.log("osu!api v1 -> Server responded with status code 429, you're sending too many requests at once and are getting rate-limited!")
+						if (number_try !== undefined && number_try < max_tries) {console.log(`osu!api v1 -> Will request again in a few instants... (Try #${number_try})`)}
+						to_retry = true
+					}
 				} else if (error.request) {
 					console.log("osu!api v1 ->", "Request made but server did not respond", `(Try #${number_try})`, {type, params})
 					to_retry = true
@@ -75,7 +84,14 @@ export class API {
 			if (this.verbose) console.log("osu!api v1 ->", resp.statusText, resp.status, {type, params})
 			return resp.data
 		} else {
-			if (to_retry && number_try < 5) {
+			/**
+			 * Under specific circumstances, we want to retry our request automatically
+			 * However, spamming the server during the same second in any of these circumstances would be pointless
+			 * So we wait for 1 to 5 seconds to make our request, 5 times maximum
+			 */
+			if (to_retry && number_try < max_tries) {
+				let to_wait = (Math.floor(Math.random() * (500 - 100 + 1)) + 100) * 10
+				await new Promise(res => setTimeout(res, to_wait))
 				return await this.request(type, params, number_try + 1)
 			} else {
 				return false
@@ -84,16 +100,16 @@ export class API {
 	}
 
 	/**
-	 * @param mode The `User`'s `Gamemode`
+	 * @param gamemode The `User`'s `Gamemode`
 	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @returns A Promise with a `User` found with the search
 	 */
-	async getUser(mode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User | APIError> {
-		if (!user.user_id && !user.username) {return new APIError("No proper `search` argument was given")}
+	async getUser(gamemode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User | APIError> {
+		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 	
-		let response = await this.request("get_user", `${lookup}&m=${mode}`)
-		if (!response[0]) {return new APIError(`No User could be found (user_id: ${user.user_id} | username: ${user.username})`)}
+		let response = await this.request("get_user", `${lookup}&m=${gamemode}`)
+		if (!response || !response[0]) {return new APIError(`No User could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
 		return correctType(response[0]) as User
 	}
 
@@ -111,7 +127,7 @@ export class API {
 	
 		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${gamemode}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
-		if (!scores.length) {return new APIError(`No Score could be found (user_id: ${user.user_id} | username: ${user.username})`)}
+		if (!scores.length) {return new APIError(`No ${plays} Score could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
 		return scores
 	}
 
@@ -126,10 +142,12 @@ export class API {
 		if (mods === undefined) {mods = Mods.None}
 		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
-		if (gamemode === undefined) {gamemode = Gamemodes.OSU}
+		let g = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
 	
-		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}&mode=${gamemode}&a=1`)
-		if (!response[0]) {return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id})`)}
+		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}${g}`)
+		if (!response || !response[0]) {
+			return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id}${gamemode !== undefined ? `| gamemode: ${Gamemodes[gamemode]}` : ""})`)
+		}
 
 		return adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
 	}
@@ -137,7 +155,7 @@ export class API {
 	/**
 	 * Look for and get `Beatmap`s with this! Returns an `APIError` if the array would be empty
 	 * @param limit The maximum number of `Beatmap`s there should be in the array, **cannot exceed 500**
-	 * @param gamemode Filter in the beatmaps by the gamemode (unless "all"), if `allow_converts` then instead convert if possible the beatmaps to that gamemode
+	 * @param gamemode Filter in the beatmaps by the gamemode (unless "all"), but if `allow_converts` then instead convert if possible the beatmaps to that gamemode
 	 * @param beatmap Will look for its `beatmapset_id` (if undefined, its `beatmap_id` (if undefined, its `file_md5`))
 	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
 	 * @param set_owner The `User` that owns the beatmapset
@@ -185,7 +203,11 @@ export class API {
 		}
 
 		let response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`)
-		if (!response[0]) {return new APIError(`No Beatmap could be found`)}
+		if (!response || !response[0]) {
+			return new APIError(
+				`No Beatmap could be found (lookup: ${lookup}${gamemode.gamemode !== undefined && gamemode.gamemode !== "all" ? `| gamemode: ${Gamemodes[gamemode.gamemode]}` : ""})`
+			)
+		}
 		let beatmaps: Beatmap[] = response.map((b: Beatmap) => adjustBeatmapStatsToMods(correctType(b), mods || Mods.None))
 
 		return beatmaps
@@ -208,7 +230,9 @@ export class API {
 		
 		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${gamemode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit}`)
 		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
-		if (!scores.length) {return new APIError(`No Score could be found (diff_id: ${beatmap.beatmap_id})`)}
+		if (!scores.length) {
+			return new APIError(`No Score could be found (gamemode: ${Gamemodes[gamemode]} | beatmap_id: ${beatmap.beatmap_id}${user ? `user lookup: ${user}` : ""})`)
+		}
 	
 		return scores
 	}
@@ -216,10 +240,12 @@ export class API {
 	/**
 	 * @param id The ID of the `Match`
 	 * @returns A Promise with a `Match`
+	 * @remarks If the API's server is set to `https://ripple.moe/api`, `getMatch` might not work as it's currently unsupported by Ripple,
+	 * see https://docs.ripple.moe/docs/api/peppy
 	 */
 	async getMatch(id: number): Promise<Match | APIError> {
 		let response = await this.request("get_match", `mp=${id}`)
-		if (!response.match) {return new APIError(`No Match could be found (id: ${id})`)}
+		if (response.match === 0 || response.match === undefined || response.length === 0) {return new APIError(`No Match could be found (id: ${id})`)}
 		return correctType(response) as Match
 	}
 	
@@ -229,6 +255,8 @@ export class API {
 	 * @param score An Object with a `score_id`, that obviously represents the id of the `Score`
 	 * @param search An Object with stuff regarding the `User`, `Beatmap`, and `Mods`
 	 * @returns If possible, a `Replay` of that `Score`
+	 * @remarks If the API's server is set to `https://ripple.moe/api`, `getReplay` might not work as it's currently unsupported by Ripple,
+	 * see https://docs.ripple.moe/docs/api/peppy
 	 */
 	async getReplay(gamemode: Gamemodes, score?: {score_id: number} | Score,
 	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}): Promise<Replay | APIError> {
@@ -251,7 +279,7 @@ export class API {
 		}
 
 		let response = await this.request("get_replay", `${lookup}&m=${gamemode}`)
-		if (!response.content) {return new APIError(`No Replay could be found`)}
+		if (!response || !response.content) {return new APIError(`No Replay could be found (gamemode: ${Gamemodes[gamemode]} | score lookup: ${lookup})`)}
 		return correctType(response) as Replay
 	}
 }
