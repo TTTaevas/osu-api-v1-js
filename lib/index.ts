@@ -5,12 +5,12 @@ import { Beatmap, Categories, Genres, Languages } from "./beatmap"
 import { Match, MultiplayerModes, WinConditions } from "./match"
 import { Mods, unsupported_mods } from "./mods"
 import { Replay } from "./replay"
-import { Gamemodes, getMods, getLength, adjustBeatmapStatsToMods } from "./misc"
+import { Gamemodes, getMods, getLength, getURL, adjustBeatmapStatsToMods } from "./misc"
 
 export {Gamemodes, User, Score, Mods, Replay}
 export {Beatmap, Categories, Genres, Languages}
 export {Match, MultiplayerModes, WinConditions}
-export {getMods, getLength, adjustBeatmapStatsToMods}
+export {getMods, getLength, getURL, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string

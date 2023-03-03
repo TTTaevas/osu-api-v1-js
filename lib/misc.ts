@@ -1,5 +1,6 @@
 import { Beatmap } from "./beatmap"
 import { Mods } from "./mods"
+import { User } from "./user"
 
 // ENUMS COMMON TO MULTIPLE STUFF
 
@@ -60,7 +61,69 @@ export function getLength(seconds: number): string {
 }
 
 /**
- * This function returns a Beatmap with properties adjusted to the chosen Mods without making a request to the servers. The properties are namely: 
+ * This object is a collection of functions that can be useful if you're looking to have an image URL
+ * or an URL that interacts directly with the game client!
+ */
+export const getURL = {
+	/**
+	 * @param beatmap An Object with the `beatmapset_id` of the Beatmap
+	 * @returns The URL of a 900x250 JPEG image
+	 */
+	beatmapCoverImage: (beatmap: {beatmapset_id: number} | Beatmap): string => `https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`,
+	/**
+	 * @param beatmap An Object with the `beatmapset_id` of the Beatmap
+	 * @returns The URL of a 160x120 JPEG image
+	 */
+	beatmapCoverThumbnail: (beatmap: {beatmapset_id: number} | Beatmap): string => `https://b.ppy.sh/thumb/${beatmap.beatmapset_id}l.jpg`,
+
+	/**
+	 * @param user An Object with the `user_id` of the User
+	 * @returns The URL of a JPEG image of variable proportions (max and ideally 256x256)
+	 */
+	userProfilePicture: (user: {user_id: number} | User): string => `https://s.ppy.sh/a/${user.user_id}`,
+
+	/**
+	 * The URLs in that Object do not use HTTPS, and instead (try to) open the osu! client in order to do something
+	 */
+	toOpen: {
+		/**
+		 * @param id NOT THE MATCH ID, it's the ID you get when joining the match through IRC, after `multiplayer game #`
+		 * @param password The password of the room
+		 * @returns The URL that may be used by someone to open the (default) osu! client and attempt to join the match
+		 */
+		match: (id: number, password?: string) => `osu://mp/${id}${password ? "/" + password : ""}`,
+		/**
+		 * @param timeline The things you can click on on the discussion page of beatmaps (like `01:01:343 (1,1)`)
+		 * @returns The URL that may be used by someone to select something when inside the beatmap editor
+		 */
+		editor: (timeline: string) => `osu://edit/${timeline}`,
+		/**
+		 * @param channel The name of a channel (like `french`)
+		 * @returns The URL that may be used by someone to attempt to open a channel
+		 */
+		channel: (channel: string) => `osu://chan/${channel.startsWith("#") ? "" : "#"}${channel}`,
+		/**
+		 * @param beatmap An Object with the ID of a Beatmap
+		 * @returns The URL that may be used by someone to attempt to open a beatmap through osu!direct
+		 */
+		beatmap: (beatmap: {beatmap_id: number} | Beatmap) => `osu://b/${beatmap.beatmap_id}`,
+		/**
+		 * @param beatmap An Object with the set ID of a Beatmap
+		 * @returns The URL that may be used by someone to attempt to open a beatmapset through osu!direct
+		 */
+		beatmapset: (beatmap: {beatmapset_id: number} | Beatmap) => `osu://s/${beatmap.beatmapset_id}`,
+		/**
+		 * @param user An Object with the ID of a User
+		 * @returns The URL that may be used by someone to attempt to spectate someone in the game client
+		 */
+		spectateUser: (user: {user_id: number} | User) => `osu://spectate/${user}`
+	}
+}
+
+/**
+ * This function returns a Beatmap with properties adjusted to the chosen Mods without making a request to the servers.
+ * 
+ * The properties are namely: 
  * `total_length`, `hit_length`, `bpm`, `diff_size`, `diff_approach`, `diff_overall`, `diff_drain`
  * @remarks NOTE THAT THIS FUNCTION DOESN'T ADJUST `diff_aim`, `diff_speed` OR `difficultyrating`, USE `getBeatmap()` FOR THAT
  * @param beatmap The Beatmap to adapt
