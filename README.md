@@ -2,7 +2,7 @@
 
 [**osu-api-v1-js**](https://github.com/TTTaevas/osu-api-v1-js) is a JavaScript & TypeScript package that helps you interact with [osu!api (v1)](https://github.com/ppy/osu-api/wiki).
 
-You can find detailed documentation on [osu.taevas.xyz](https://osu.taevas.xyz/) if needed!
+You can find detailed documentation on [osu-v1.taevas.xyz](https://osu-v1.taevas.xyz/) if needed!
 
 ## How to install and get started
 
