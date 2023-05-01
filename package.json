@@ -19,7 +19,7 @@
   "devDependencies": {
     "@types/node": "^18.13.0",
     "dotenv": "^16.0.3",
-    "typedoc": "^0.23.25",
+    "typedoc": "^0.24.6",
     "typescript": "^5.0.2"
   },
   "dependencies": {
