@@ -1,6 +1,6 @@
 import "dotenv/config"
-import * as osu from "./index"
-import { unsupported_mods } from "./mods"
+import * as osu from "./index.js"
+import { unsupported_mods } from "./mods.js"
 
 const key = process.env.KEY
 if (key === undefined) {throw new Error("The API key has not been defined in the environment variables! (name of the variable is `KEY`)")}

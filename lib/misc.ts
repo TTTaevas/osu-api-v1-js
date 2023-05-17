@@ -1,6 +1,6 @@
-import { Beatmap } from "./beatmap"
-import { Mods } from "./mods"
-import { User } from "./user"
+import { Beatmap } from "./beatmap.js"
+import { Mods } from "./mods.js"
+import { User } from "./user.js"
 
 // ENUMS COMMON TO MULTIPLE STUFF
 

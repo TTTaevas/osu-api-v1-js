@@ -1,11 +1,11 @@
-import axios, { AxiosError, AxiosResponse } from "axios"
-import { User } from "./user"
-import { Score } from "./score"
-import { Beatmap, Categories, Genres, Languages } from "./beatmap"
-import { Match, MultiplayerModes, WinConditions } from "./match"
-import { Mods, unsupported_mods } from "./mods"
-import { Replay } from "./replay"
-import { Gamemodes, getMods, getLength, getURL, adjustBeatmapStatsToMods } from "./misc"
+import fetch, { FetchError } from "node-fetch"
+import { User } from "./user.js"
+import { Score } from "./score.js"
+import { Beatmap, Categories, Genres, Languages } from "./beatmap.js"
+import { Match, MultiplayerModes, WinConditions } from "./match.js"
+import { Mods, unsupported_mods } from "./mods.js"
+import { Replay } from "./replay.js"
+import { Gamemodes, getMods, getLength, getURL, adjustBeatmapStatsToMods } from "./misc.js"
 
 export {Gamemodes, User, Score, Mods, Replay}
 export {Beatmap, Categories, Genres, Languages}
@@ -14,11 +14,20 @@ export {getMods, getLength, getURL, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string
+	server?: string
+	endpoint?: string
+	parameters?: string
 	/**
 	 * @param message The reason why things didn't go as expected
+	 * @param server The server to which the request was sent
+	 * @param endpoint The type of resource that was requested from the server
+	 * @param parameters The filters that were used to specify what resource was wanted
 	 */
-	constructor(message: string) {
+	constructor(message: string, server?: string, endpoint?: string, parameters?: string) {
 		this.message = message
+		this.server = server
+		this.endpoint = endpoint
+		this.parameters = parameters
 	}
 }
 
@@ -34,24 +43,29 @@ export class API {
 	constructor(key: string, verbose?: boolean, server?: string) {
 		this.key = key
 		this.verbose = verbose || false
-		this.server = server === undefined ? "https://osu.ppy.sh/api/" : server
+		this.server = server || "https://osu.ppy.sh/api/"
+	}
+
+	private log(...to_log: any[]) {
+		if (this.verbose) {
+			console.log("osu!api v1 ->", ...to_log)
+		}
 	}
 
 	/**
-	 * @param type Basically the endpoint, what comes in the URL after `api/`
-	 * @param params The things to specify in the request, such as the beatmap_id when looking for a beatmap
+	 * @param endpoint Basically the endpoint, what comes in the URL after `api/`
+	 * @param parameters The things to specify in the request, such as the beatmap_id when looking for a beatmap
 	 * @param number_try How many attempts there's been to get the data
 	 * @returns A Promise with either the API's response or `false` upon failing
 	 */
-	private async request(type: string, params: string, number_try?: number): Promise<AxiosResponse["data"] | false> {
+	private async request(endpoint: string, parameters: string, number_try?: number): Promise<any | false | APIError> {
 		const max_tries = 5
 		if (!number_try) {number_try = 1}
+		let err = "none"
 		let to_retry = false
-	
-		const resp = await axios({
+
+		const response = await fetch(`${this.server}/${endpoint}?k=${this.key}&${parameters}`, {
 			method: "get",
-			baseURL: this.server,
-			url: `/${type}?k=${this.key}&${params}`,
 			headers: {
 				"Accept": "application/json",
 				"Accept-Encoding": "gzip",
@@ -59,44 +73,36 @@ export class API {
 				"User-Agent": "osu-api-v1-js (https://github.com/TTTaevas/osu-api-v1-js)"
 			}
 		})
-		.catch((error: Error | AxiosError) => {
-			if (axios.isAxiosError(error)) {
-				if (error.response) {
-					console.log("osu!api v1 ->", error.response.statusText, error.response.status, {type, params})
-					if (error.response.status === 401) console.log("osu!api v1 -> Server responded with status code 401, are you sure you're using a valid API key?")
-					if (error.response.status === 429) {
-						console.log("osu!api v1 -> Server responded with status code 429, you're sending too many requests at once and are getting rate-limited!")
-						if (number_try !== undefined && number_try < max_tries) {console.log(`osu!api v1 -> Will request again in a few instants... (Try #${number_try})`)}
-						to_retry = true
-					}
-				} else if (error.request) {
-					console.log("osu!api v1 ->", "Request made but server did not respond", `(Try #${number_try})`, {type, params})
-					to_retry = true
-				} else { // Something happened in setting up the request that triggered an error, I think
-					console.error(error)
-				}
-			} else {
-				console.error(error)
-			}
+		.catch((error: FetchError) => {
+			this.log(error.message)
+			err = `${error.name} (${error.errno})`
 		})
 		
-		if (resp) {
-			if (this.verbose) console.log("osu!api v1 ->", resp.statusText, resp.status, {type, params})
-			return resp.data
-		} else {
-			/**
-			 * Under specific circumstances, we want to retry our request automatically
-			 * However, spamming the server during the same second in any of these circumstances would be pointless
-			 * So we wait for 1 to 5 seconds to make our request, 5 times maximum
-			 */
-			if (to_retry && number_try < max_tries) {
+		if (!response || !response.ok) {
+			if (response) {
+				err = response.statusText
+				if (response.status === 401) {
+					this.log("Server responded with status code 401, are you sure you're using a valid API key?")
+				} else if (response.status === 429) {
+					this.log("Server responded with status code 429, you're sending too many requests at once and are getting rate-limited!")
+					to_retry = true
+				}
+			}
+
+			if (to_retry === true && number_try < max_tries) {
+				this.log("Will request again in a few instants...", `(Try #${number_try})`)
 				let to_wait = (Math.floor(Math.random() * (500 - 100 + 1)) + 100) * 10
 				await new Promise(res => setTimeout(res, to_wait))
-				return await this.request(type, params, number_try + 1)
-			} else {
-				return false
+				return await this.request(endpoint, parameters, number_try + 1)
 			}
+
+			// return new APIError(err)
+			return false
 		}
+
+		this.log(response.statusText, response.status, {endpoint, parameters})
+		let json = await response.json()
+		return json
 	}
 
 	/**
