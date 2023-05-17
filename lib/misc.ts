@@ -11,19 +11,19 @@ export enum Gamemodes {
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21
 	 */
-	OSU 	= 0,
+	osu 	= 0,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21taiko
 	 */
-	TAIKO = 1,
+	taiko = 1,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21catch
 	 */
-	CTB 	= 2,
+	ctb 	= 2,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21mania
 	 */
-	MANIA = 3,
+	mania = 3,
 }
 
 

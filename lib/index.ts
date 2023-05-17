@@ -14,16 +14,16 @@ export {getMods, getLength, getURL, adjustBeatmapStatsToMods}
 
 export class APIError {
 	message: string
-	server?: string
-	endpoint?: string
-	parameters?: string
+	server: string
+	endpoint: string
+	parameters: string
 	/**
 	 * @param message The reason why things didn't go as expected
 	 * @param server The server to which the request was sent
 	 * @param endpoint The type of resource that was requested from the server
 	 * @param parameters The filters that were used to specify what resource was wanted
 	 */
-	constructor(message: string, server?: string, endpoint?: string, parameters?: string) {
+	constructor(message: string, server: string, endpoint: string, parameters: string) {
 		this.message = message
 		this.server = server
 		this.endpoint = endpoint
@@ -58,7 +58,7 @@ export class API {
 	 * @param number_try How many attempts there's been to get the data
 	 * @returns A Promise with either the API's response or `false` upon failing
 	 */
-	private async request(endpoint: string, parameters: string, number_try?: number): Promise<any | false | APIError> {
+	private async request(endpoint: string, parameters: string, number_try?: number): Promise<any> {
 		const max_tries = 5
 		if (!number_try) {number_try = 1}
 		let err = "none"
@@ -96,12 +96,22 @@ export class API {
 				return await this.request(endpoint, parameters, number_try + 1)
 			}
 
-			// return new APIError(err)
-			return false
+			throw new APIError(err, this.server, endpoint, parameters)
 		}
-
+		
 		this.log(response.statusText, response.status, {endpoint, parameters})
 		let json = await response.json()
+		if (Array.isArray(json) && !json.length) {
+			throw new APIError("No results", this.server, endpoint, parameters)
+		} else if (typeof json === "object" && json) {
+			if ("error" in json) {
+				let err = typeof json.error === "string" ? json.error : "A strange error was returned by the server..."
+				throw new APIError(err, this.server, endpoint, parameters)
+			}
+			if ("match" in json && json.match === 0) {
+				throw new APIError("Match not available.", this.server, endpoint, parameters)
+			}
+		}
 		return json
 	}
 
@@ -110,13 +120,10 @@ export class API {
 	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
 	 * @returns A Promise with a `User` found with the search
 	 */
-	async getUser(gamemode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User | APIError> {
-		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
+	async getUser(gamemode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User> {
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
-	
-		let response = await this.request("get_user", `${lookup}&m=${gamemode}`)
-		if (!response || !response[0]) {return new APIError(`No User could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
-		return correctType(response[0]) as User
+		let response = await this.request("get_user", `m=${gamemode}&${lookup}`) as User[]
+		return correctType(response[0])
 	}
 
 	/**
@@ -126,15 +133,10 @@ export class API {
 	 * @param plays The `User`'s top pp plays/`Scores` or the `User`'s plays/`Scores` within the last 24 hours
 	 * @returns A Promise with an array of `Scores` set by the `User` in a specific `Gamemode`
 	 */
-	async getUserScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent"): Promise<Score[] | APIError> {
-		let scores: Score[] = []
-		if (!user.user_id && !user.username) {return new APIError("No proper `user` argument was given")}
+	async getUserScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent"): Promise<Score[]> {
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
-	
-		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${gamemode}&limit=${limit}`)
-		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
-		if (!scores.length) {return new APIError(`No ${plays} Score could be found (gamemode: ${Gamemodes[gamemode]} | user lookup: ${lookup})`)}
-		return scores
+		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${gamemode}&limit=${limit}`) as Score[]
+		return correctType(response)
 	}
 
 	/**
@@ -144,22 +146,18 @@ export class API {
 	 * @param gamemode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
 	 * @returns A Promise with a `Beatmap`
 	 */
-	async getBeatmap(beatmap: {beatmap_id: number} | Beatmap, mods?: Mods, gamemode?: Gamemodes): Promise<Beatmap | APIError> {
+	async getBeatmap(beatmap: {beatmap_id: number} | Beatmap, mods?: Mods, gamemode?: Gamemodes): Promise<Beatmap> {
 		if (mods === undefined) {mods = Mods.None}
 		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
 		let g = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
 	
-		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}${g}`)
-		if (!response || !response[0]) {
-			return new APIError(`No Beatmap could be found (beatmap_id: ${beatmap.beatmap_id}${gamemode !== undefined ? `| gamemode: ${Gamemodes[gamemode]}` : ""})`)
-		}
-
-		return adjustBeatmapStatsToMods(correctType(response[0]) as Beatmap, mods)
+		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}${g}`) as Beatmap[]
+		return adjustBeatmapStatsToMods(correctType(response[0]), mods)
 	}
 
 	/**
-	 * Look for and get `Beatmap`s with this! Returns an `APIError` if the array would be empty
+	 * Look for and get `Beatmap`s with this! Throws an `APIError` if the array would be empty
 	 * @param limit The maximum number of `Beatmap`s there should be in the array, **cannot exceed 500**
 	 * @param gamemode Filter in the beatmaps by the gamemode (unless "all"), but if `allow_converts` then instead convert if possible the beatmaps to that gamemode
 	 * @param beatmap Will look for its `beatmapset_id` (if undefined, its `beatmap_id` (if undefined, its `file_md5`))
@@ -173,7 +171,7 @@ export class API {
 	mods?: Mods,
 	set_owner?: {user_id?: number, username?: string} | User,
 	since?: Date
-	): Promise<Beatmap[] | APIError> {
+	): Promise<Beatmap[]> {
 		if (mods === undefined) {mods = Mods.None}
 		if (getMods(mods).includes(Mods[Mods.Nightcore]) && !getMods(mods).includes(Mods[Mods.DoubleTime])) {mods -= Mods.Nightcore - Mods.DoubleTime}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
@@ -188,8 +186,6 @@ export class API {
 				lookup += `&b=${beatmap.beatmap_id}`
 			} else if (beatmap.file_md5 !== undefined) {
 				lookup += `&h=${beatmap.file_md5}`
-			} else {
-				return new APIError("The `beatmap` argument was given but it doesn't have at least one good property!")
 			}
 		}
 
@@ -198,8 +194,6 @@ export class API {
 				lookup += `&u=${set_owner.user_id}&type=id`
 			} else if (set_owner.username !== undefined) {
 				lookup += `&u=${set_owner.username}&type=string`
-			} else {
-				return new APIError("The `set_owner` argument was given but it doesn't have at least one good property!")
 			}
 		}
 
@@ -208,14 +202,8 @@ export class API {
 			lookup += x.substring(0, x.indexOf("Z") - 4)
 		}
 
-		let response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`)
-		if (!response || !response[0]) {
-			return new APIError(
-				`No Beatmap could be found (lookup: ${lookup}${gamemode.gamemode !== undefined && gamemode.gamemode !== "all" ? `| gamemode: ${Gamemodes[gamemode.gamemode]}` : ""})`
-			)
-		}
+		let response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`) as Beatmap[]
 		let beatmaps: Beatmap[] = response.map((b: Beatmap) => adjustBeatmapStatsToMods(correctType(b), mods || Mods.None))
-
 		return beatmaps
 	}
 
@@ -228,19 +216,10 @@ export class API {
 	 * @returns A Promise with an array of `Scores` set on a beatmap
 	 */
 	async getBeatmapScores(limit: number, gamemode: Gamemodes, beatmap: {beatmap_id: number} | Beatmap,
-	user?: {user_id?: number, username?: string} | User, mods?: Mods): Promise<Score[] | APIError> {
-		let scores: Score[] = []
-	
-		if (user && !user.user_id && !user.username) {return new APIError("The `user` argument lacks a user_id/username property")}
+	user?: {user_id?: number, username?: string} | User, mods?: Mods): Promise<Score[]> {
 		let user_lookup = user ? user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string` : ""
-		
 		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${gamemode}${mods ? "&mods="+mods : ""}${user_lookup}&limit=${limit}`)
-		if (response) response.forEach((s: Object) => scores.push(correctType(s) as Score))
-		if (!scores.length) {
-			return new APIError(`No Score could be found (gamemode: ${Gamemodes[gamemode]} | beatmap_id: ${beatmap.beatmap_id}${user ? `user lookup: ${user}` : ""})`)
-		}
-	
-		return scores
+		return correctType(response) as Score[]
 	}
 
 	/**
@@ -249,9 +228,8 @@ export class API {
 	 * @remarks If the API's server is set to `https://ripple.moe/api`, `getMatch` might not work as it's currently unsupported by Ripple,
 	 * see https://docs.ripple.moe/docs/api/peppy
 	 */
-	async getMatch(id: number): Promise<Match | APIError> {
+	async getMatch(id: number): Promise<Match> {
 		let response = await this.request("get_match", `mp=${id}`)
-		if (response.match === 0 || response.match === undefined || response.length === 0) {return new APIError(`No Match could be found (id: ${id})`)}
 		return correctType(response) as Match
 	}
 	
@@ -265,8 +243,8 @@ export class API {
 	 * see https://docs.ripple.moe/docs/api/peppy
 	 */
 	async getReplay(gamemode: Gamemodes, score?: {score_id: number} | Score,
-	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}): Promise<Replay | APIError> {
-		let lookup: string
+	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}): Promise<Replay> {
+		let lookup = ""
 
 		if (score !== undefined) {
 			lookup = `s=${score.score_id}`
@@ -275,17 +253,12 @@ export class API {
 				lookup = `u=${search.user.user_id}&type=id`
 			} else if (search.user.username !== undefined) {
 				lookup = `u=${search.user.username}&type=string`
-			} else {
-				return new APIError("No proper `score.search.user` argument was given (it lacks either an `user_id` or an `username`)")
 			}
 			lookup += `&b=${search.beatmap.beatmap_id}`
 			lookup += `&mods=${search.mods}`
-		} else {
-			return new APIError("No proper `score` or `search` argument was given")
 		}
 
 		let response = await this.request("get_replay", `${lookup}&m=${gamemode}`)
-		if (!response || !response.content) {return new APIError(`No Replay could be found (gamemode: ${Gamemodes[gamemode]} | score lookup: ${lookup})`)}
 		return correctType(response) as Replay
 	}
 }
