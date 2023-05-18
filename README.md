@@ -11,6 +11,7 @@ To install the package, use a command from your package manager:
 ```bash
 npm i osu-api-v1-js # if using npm
 yarn add osu-api-v1-js # if using yarn
+pnpm add osu-api-v1-js # if using pnpm
 ```
 
 Make sure to add `"type": "module"` to your `package.json`!
