@@ -8,8 +8,8 @@
   "scripts": {
     "prepublish": "yarn run build",
     "build": "tsc",
-    "test": "node ./dist/test.js",
-    "doc": "npx typedoc lib/index.ts --cname osu-v1.taevas.xyz"
+    "test": "yarn run build && node ./dist/test.js",
+    "doc": "yarn run build && npx typedoc lib/index.ts --cname osu-v1.taevas.xyz"
   },
   "author": "Taevas",
   "repository": {

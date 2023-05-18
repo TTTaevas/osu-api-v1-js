@@ -11,19 +11,19 @@ export enum Gamemodes {
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21
 	 */
-	osu 	= 0,
+	OSU 	= 0,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21taiko
 	 */
-	taiko = 1,
+	TAIKO = 1,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21catch
 	 */
-	ctb 	= 2,
+	CTB 	= 2,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21mania
 	 */
-	mania = 3,
+	MANIA = 3,
 }
 
 
@@ -140,21 +140,21 @@ export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap
 		return ms
 	}
 
-	if (arr.includes("Easy")) {
+	if (arr.includes(Mods[Mods.EASY])) {
 		beatmap.diff_size /= 2
 		beatmap.diff_approach /= 2
 		beatmap.diff_overall /= 2
 		beatmap.diff_drain /= 2
 	}
 
-	if (arr.includes("HardRock")) {
+	if (arr.includes(Mods[Mods.HARDROCK])) {
 		beatmap.diff_size = Math.min(10, beatmap.diff_size * 1.3)
 		beatmap.diff_approach = Math.min(10, beatmap.diff_approach * 1.4)
 		beatmap.diff_overall = Math.min(10, beatmap.diff_overall * 1.4)
 		beatmap.diff_drain = Math.min(10, beatmap.diff_drain * 1.4)
 	}
 
-	if (arr.includes("DoubleTime") || arr.includes("Nightcore")) {
+	if (arr.includes(Mods[Mods.DOUBLETIME]) || arr.includes(Mods[Mods.NIGHTCORE])) {
 		beatmap.total_length /= 1.5
 		beatmap.hit_length /= 1.5
 		beatmap.bpm *= 1.5
@@ -162,7 +162,7 @@ export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap
 		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 1.5)) / 6
 	}
 
-	if (arr.includes("HalfTime")) {
+	if (arr.includes(Mods[Mods.HALFTIME])) {
 		beatmap.total_length /= 0.75
 		beatmap.hit_length /= 0.75
 		beatmap.bpm *= 0.75

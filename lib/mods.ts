@@ -1,49 +1,58 @@
 /**
- * So you can do something like `Mods.Hidden + Mods["HardRock"]` instead of thinking about the bitwise number
+ * So you can do something like `Mods.HIDDEN + Mods["HARDROCK"]` instead of thinking about the bitwise number
  * (https://github.com/ppy/osu-api/wiki#mods)
  */
 export enum Mods {
-	None           = 0,
-	NoFail         = 1,
-	Easy           = 2,
-	TouchDevice    = 4,
-	Hidden         = 8,
-	HardRock       = 16,
-	SuddenDeath    = 32,
-	DoubleTime     = 64,
-	Relax          = 128,
-	HalfTime       = 256,
-	Nightcore      = 512, // Only set along with DoubleTime. i.e: NC only gives 576
-	Flashlight     = 1024,
-	Autoplay       = 2048,
-	SpunOut        = 4096,
-	Autopilot      = 8192, // Is "Relax2" in documentation
-	Perfect        = 16384, // Only set along with SuddenDeath. i.e: PF only gives 16416  
-	Key4           = 32768,
-	Key5           = 65536,
-	Key6           = 131072,
-	Key7           = 262144,
-	Key8           = 524288,
-	FadeIn         = 1048576,
-	Random         = 2097152,
-	Cinema         = 4194304,
-	Target         = 8388608,
-	Key9           = 16777216,
-	KeyCoop        = 33554432,
-	Key1           = 67108864,
-	Key3           = 134217728,
-	Key2           = 268435456,
-	ScoreV2        = 536870912,
-	Mirror         = 1073741824,
+	NONE           = 0,
+	NOFAIL         = 1,
+	EASY           = 2,
+	TOUCHDEVICE    = 4,
+	HIDDEN         = 8,
+	HARDROCK       = 16,
+	SUDDENDEATH    = 32,
+	DOUBLETIME     = 64,
+	RELAX          = 128,
+	HALFTIME       = 256,
+	/**
+	 * @remarks From osu!api wiki: Only set along with DoubleTime. i.e: NC only gives 576
+	 */
+	NIGHTCORE      = 512,
+	FLASHLIGHT     = 1024,
+	AUTOPLAY       = 2048,
+	SPUNOUT        = 4096,
+	/**
+	 * It's called `Relax2` in the osu!api wiki
+	 */
+	AUTOPILOT      = 8192,
+	/**
+	 * @remarks From osu!api wiki: Only set along with SuddenDeath. i.e: PF only gives 16416  
+	 */
+	PERFECT        = 16384,
+	KEY4           = 32768,
+	KEY5           = 65536,
+	KEY6           = 131072,
+	KEY7           = 262144,
+	KEY8           = 524288,
+	FADEIN         = 1048576,
+	RANDOM         = 2097152,
+	CINEMA         = 4194304,
+	TARGET         = 8388608,
+	KEY9           = 16777216,
+	KEYCOOP        = 33554432,
+	KEY1           = 67108864,
+	KEY3           = 134217728,
+	KEY2           = 268435456,
+	SCOREV2        = 536870912,
+	MIRROR         = 1073741824,
 }
 
 /**
- * API returns the SR (and pp stuff) of a Beatmap as 0/null if any of those mods are included.
+ * API returns the SR (and pp stuff) of a Beatmap as 0/null if any of those mods are included
  */
-export const unsupported_mods = [ // exported only for test.ts, not to be used normally
-	Mods.NoFail, Mods.Hidden, Mods.SpunOut, Mods.FadeIn, Mods.Nightcore, // note that Score.enabled_mods, when Nightcore, also has DoubleTime
-	Mods.SuddenDeath, Mods.Perfect,
-	Mods.Relax, Mods.Autoplay, Mods.Autopilot, Mods.Cinema,
-	Mods.Random, Mods.Target, Mods.ScoreV2, Mods.Mirror,
-	Mods.Key1, Mods.Key2, Mods.Key3, Mods.Key4, Mods.Key5, Mods.Key6, Mods.Key7, Mods.Key8, Mods.Key9, Mods.KeyCoop,
+export const unsupported_mods = [
+	Mods.NOFAIL, Mods.HIDDEN, Mods.SPUNOUT, Mods.FADEIN, Mods.NIGHTCORE, // note that Score.enabled_mods, when Nightcore, also has DoubleTime
+	Mods.SUDDENDEATH, Mods.PERFECT,
+	Mods.RELAX, Mods.AUTOPLAY, Mods.AUTOPILOT, Mods.CINEMA,
+	Mods.RANDOM, Mods.TARGET, Mods.SCOREV2, Mods.MIRROR,
+	Mods.KEY1, Mods.KEY2, Mods.KEY3, Mods.KEY4, Mods.KEY5, Mods.KEY6, Mods.KEY7, Mods.KEY8, Mods.KEY9, Mods.KEYCOOP,
 ]
