@@ -1,5 +1,9 @@
 .env
 .github
+.gitignore
+*.log
 lib/
 docs/
 test.*
+yarn.lock
+tsconfig.json

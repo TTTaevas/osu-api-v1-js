@@ -1,5 +1,5 @@
-on: pull_request
 name: Node.js CI
+on: pull_request
 
 jobs:
   test:
@@ -8,19 +8,13 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x]
+        node-version: [16.x, 18.x, 20.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - name: Sets env vars (normal)
-      run: |
-        echo "KEY=${{ vars.KEY }}" >> $GITHUB_ENV
-      if: ${{ github.actor != 'dependabot[bot]' }}
-
-    - name: Sets env vars (dependabot)
+    - name: Set the API key
       run: |
         echo "KEY=${{ secrets.KEY }}" >> $GITHUB_ENV
-      if: ${{ github.actor == 'dependabot[bot]' }}
 
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
@@ -32,11 +26,6 @@ jobs:
       uses: borales/actions-yarn@v4
       with:
         cmd: install
-    
-    - name: Build
-      uses: borales/actions-yarn@v4
-      with:
-        cmd: run build
 
     - name: Test
       uses: borales/actions-yarn@v4
