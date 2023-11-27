@@ -1,6 +1,8 @@
 export interface Score {
-	beatmap_id: number
-	score_id: number
+	/**
+	 * If the score is a fail (is not completed, has a "F" rank/grade) then this is null
+	 */
+	score_id: number | null
 	score: number
 	maxcombo: number
 	count50: number
@@ -20,7 +22,7 @@ export interface Score {
 	 */
 	perfect: boolean
 	/**
-	 * Bitwise flag. Feel free to use `getMods` to see the mods in a more readable way!
+	 * Bitwise flag, feel free to use `getMods` to see the mods in a more readable way!
 	 */
 	enabled_mods: number
 	user_id: number
@@ -34,4 +36,8 @@ export interface Score {
 	rank: string
 	pp?: number
 	replay_available?: boolean
+}
+
+export interface ScoreWithBeatmapid extends Score {
+	beatmap_id: number
 }

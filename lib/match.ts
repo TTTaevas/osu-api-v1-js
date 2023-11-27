@@ -34,14 +34,14 @@ export interface Match {
 	games: {
 		game_id: number
 		start_time: Date
-		end_time: Date
+		end_time: Date | null
 		beatmap_id: number
 		play_mode: number
 		match_type: number
 		scoring_type: number
 		team_type: number
 		/**
-		 * Bitwise flag. Feel free to use `getMods` to see the mods in a more readable way! Do note that individual scores have a nullable `enabled_mods` property
+		 * Bitwise flag, feel free to use `getMods` to see the mods in a more readable way! Do note that individual scores have a nullable `enabled_mods` property
 		 */
 		mods: number
 		scores: {

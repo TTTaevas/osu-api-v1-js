@@ -1,16 +1,52 @@
 import fetch, { FetchError } from "node-fetch"
 import { User } from "./user.js"
-import { Score } from "./score.js"
+import { Score, ScoreWithBeatmapid } from "./score.js"
 import { Beatmap, Categories, Genres, Languages } from "./beatmap.js"
 import { Match, MultiplayerModes, WinConditions } from "./match.js"
 import { Mods, unsupported_mods } from "./mods.js"
 import { Replay } from "./replay.js"
 import { Gamemodes, getMods, getLength, getURL, adjustBeatmapStatsToMods } from "./misc.js"
 
-export {Gamemodes, User, Score, Mods, Replay}
+export {Gamemodes, User, Score, ScoreWithBeatmapid, Mods, Replay}
 export {Beatmap, Categories, Genres, Languages}
 export {Match, MultiplayerModes, WinConditions}
 export {getMods, getLength, getURL, adjustBeatmapStatsToMods}
+
+/**
+ * *Almost* **everything** in the JSONs the API returns is a string, this function fixes that
+ * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
+ * @returns x, but with it (or what it contains) now having the correct type
+ */
+function correctType(x: any): any {
+	/**
+	 * This package transforms some properties into Booleans when fitting
+	 */
+	const bools = [
+		"replay_available", // Score
+		"pass", // Match.games
+		"perfect", // Score, Match.games
+		"storyboard", "video", "download_unavailable", "audio_unavailable" // Beatmap
+	]
+
+	if (typeof x === "boolean") {
+		return x
+	} else if (/^[+-[0-9][0-9]+-[0-9]{2}-[0-9]{2}($|[ T].*)/.test(x)) {
+		if (/[0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(x)) x += "Z"
+		if (/[0-9]{2}:[0-9]{2}:[0-9]{2}\+[0-9]{2}:[0-9]{2}$/.test(x)) x = x.substring(0, x.indexOf("+")) + "Z"
+		return new Date(x)
+	} else if (Array.isArray(x)) {
+		return x.map((e) => correctType(e))
+	} else if (!isNaN(x) && x !== "") {
+		return x === null ? null : Number(x)
+	} else if (typeof x === "object" && x !== null) {
+		const k = Object.keys(x)
+		const v = Object.values(x)
+		for (let i = 0; i < k.length; i++) {
+			x[k[i]] = bools.includes(k[i]) ? Boolean(Number(v[i])) : correctType(v[i])
+		}
+	}
+	return x
+}
 
 /**
  * If the `API` throws an error, it should always be an `APIError`!
@@ -145,7 +181,8 @@ export class API {
 	 * @param plays The `User`'s top pp plays/`Scores` or the `User`'s plays/`Scores` within the last 24 hours
 	 * @returns A Promise with an array of `Scores` set by the `User` in a specific `Gamemode`
 	 */
-	async getUserScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent"): Promise<Score[]> {
+	async getUserScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent"):
+	Promise<ScoreWithBeatmapid[]> {
 		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${gamemode}&limit=${limit}`) as Score[]
 		return correctType(response)
@@ -271,36 +308,4 @@ export class API {
 		let response = await this.request("get_replay", `${lookup}&m=${gamemode}`)
 		return correctType(response) as Replay
 	}
-}
-
-/**
- * *Almost* **everything** in the JSONs the API returns is a string, this function fixes that
- * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
- * @returns x, but with it (or what it contains) now having the correct type
- */
-function correctType(x: any): any {
-	/**
-	 * This package transforms some properties into Booleans when fitting
-	 */
-	const bools = [
-		"replay_available", // Score
-		"pass", // Match.games
-		"perfect", // Score, Match.games
-		"storyboard", "video", "download_unavailable", "audio_unavailable" // Beatmap
-	]
-
-	if (!isNaN(x)) {
-		return x === null ? null : Number(x)
-	} else if (/^[+-[0-9][0-9]+-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(x)) {
-		return new Date(x + "Z") // add Z to string to specify it's UTC
-	} else if (Array.isArray(x)) {
-		return x.map((e) => correctType(e))
-	} else if (typeof x === "object" && x !== null) {
-		const k = Object.keys(x)
-		const v = Object.values(x)
-		for (let i = 0; i < k.length; i++) {
-			x[k[i]] = bools.includes(k[i]) ? Boolean(Number(v[i])) : correctType(v[i])
-		}
-	}
-	return x
 }
