@@ -2,54 +2,54 @@
  * For the `approved` of a `Beatmap` (for example, `Categories[beatmap.approved]` would return "RANKED" if 1) https://osu.ppy.sh/wiki/en/Beatmap/Category
  */
 export enum Categories {
-	GRAVEYARD = -2,
-	WIP  			= -1,
-	PENDING 	= 0,
-	RANKED  	= 1,
-	APPROVED 	= 2,
-	QUALIFIED = 3,
+	GRAVEYARD	= -2,
+	WIP			= -1,
+	PENDING		= 0,
+	RANKED		= 1,
+	APPROVED	= 2,
+	QUALIFIED	= 3,
 }
 
 /**
  * For the `genre_id` of a `Beatmap` (for example, `Genres[beatmap.genre_id]` would return "NOVELTY" if 7)
  */
 export enum Genres {
-	ANY 				 = 0,
-	UNSPECIFIED  = 1,
-	"VIDEO GAME" = 2,
-	ANIME 			 = 3,
-	ROCK 				 = 4,
-	POP 				 = 5,
-	OTHER 			 = 6,
-	NOVELTY 		 = 7,
-	"" 					 = 8,
-	"HIP HOP" 	 = 9,
-	ELECTRONIC 	 = 10,
-	METAL 			 = 11,
-	CLASSICAL 	 = 12,
-	FOLK 				 = 13,
-	JAZZ 				 = 14,
+	ANY				= 0,
+	UNSPECIFIED		= 1,
+	"VIDEO GAME"	= 2,
+	ANIME			= 3,
+	ROCK			= 4,
+	POP				= 5,
+	OTHER			= 6,
+	NOVELTY			= 7,
+	""				= 8,
+	"HIP HOP"		= 9,
+	ELECTRONIC		= 10,
+	METAL			= 11,
+	CLASSICAL		= 12,
+	FOLK			= 13,
+	JAZZ			= 14,
 }
 
 /**
  * For the `language_id` of a `Beatmap` (for example, `Languages[beatmap.language_id]` would return "FRENCH" if 7)
  */
 export enum Languages {
-	ANY 				 = 0,
-	UNSPECIFIED  = 1,
-	ENGLISH 		 = 2,
-	JAPANESE 		 = 3,
-	CHINESE 		 = 4,
-	INSTRUMENTAL = 5,
-	KOREAN 			 = 6,
-	FRENCH 			 = 7,
-	GERMAN 			 = 8,
-	SWEDISH 		 = 9,
-	SPANISH 		 = 10,
-	ITALIAN 		 = 11,
-	RUSSIAN 		 = 12,
-	POLISH 			 = 13,
-	OTHER 			 = 14,
+	ANY				= 0,
+	UNSPECIFIED		= 1,
+	ENGLISH			= 2,
+	JAPANESE 		= 3,
+	CHINESE			= 4,
+	INSTRUMENTAL	= 5,
+	KOREAN			= 6,
+	FRENCH			= 7,
+	GERMAN			= 8,
+	SWEDISH			= 9,
+	SPANISH			= 10,
+	ITALIAN			= 11,
+	RUSSIAN			= 12,
+	POLISH			= 13,
+	OTHER			= 14,
 }
 
 export interface Beatmap {
@@ -120,10 +120,7 @@ export interface Beatmap {
 	creator: string
 	creator_id: number
 	bpm: number
-	/**
-	 * Is 0 if no source
-	 */
-	source: string | 0
+	source: string
 	tags: string
 	genre_id: number
 	language_id: number

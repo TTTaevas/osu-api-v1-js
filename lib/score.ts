@@ -1,8 +1,12 @@
 export interface Score {
 	/**
-	 * If the score is a fail (is not completed, has a "F" rank/grade) then this is null
+	 * The id of the score!
+	 * @remarks If the score is a fail (is not completed, has a "F" rank/grade) then this is null
 	 */
 	score_id: number | null
+	/**
+	 * The score itself, for example 923,357 (without the comma ",")
+	 */
 	score: number
 	maxcombo: number
 	count50: number
@@ -23,6 +27,7 @@ export interface Score {
 	perfect: boolean
 	/**
 	 * Bitwise flag, feel free to use `getMods` to see the mods in a more readable way!
+	 * @remarks If it has Nightcore, it also has DoubleTime
 	 */
 	enabled_mods: number
 	user_id: number
@@ -34,10 +39,29 @@ export interface Score {
 	 * Also known as the Grade https://osu.ppy.sh/wiki/en/Gameplay/Grade, it may be "F" if the player failed
 	 */
 	rank: string
-	pp?: number
-	replay_available?: boolean
 }
 
 export interface ScoreWithBeatmapid extends Score {
 	beatmap_id: number
+}
+
+export interface ScoreWithReplayavailablePp extends Score {
+	/**
+	 * @remarks It can't be null, because ScoreWithReplayavailablePp is only available for scores that haven't failed
+	 */
+	score_id: number
+	/**
+	 * How much pp the score play is worth!
+	 * @remarks Null if beatmap is loved (for example)
+	 */
+	pp: number | null
+	replay_available: boolean
+}
+
+export interface ScoreWithBeatmapidReplayavailablePp extends ScoreWithBeatmapid, ScoreWithReplayavailablePp {
+	score_id: number
+	/**
+	 * @remarks It can't be null, because ScoreWithBeatmapidReplayavailablePp is only available for scores that are worth something
+	 */
+	pp: number
 }

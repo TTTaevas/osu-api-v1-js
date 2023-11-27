@@ -50,7 +50,7 @@ export enum Mods {
  * API returns the SR (and pp stuff) of a Beatmap as 0/null if any of those mods are included
  */
 export const unsupported_mods = [
-	Mods.NOFAIL, Mods.HIDDEN, Mods.SPUNOUT, Mods.FADEIN, Mods.NIGHTCORE, // note that Score.enabled_mods, when Nightcore, also has DoubleTime
+	Mods.NOFAIL, Mods.HIDDEN, Mods.SPUNOUT, Mods.FADEIN, Mods.NIGHTCORE,
 	Mods.SUDDENDEATH, Mods.PERFECT,
 	Mods.RELAX, Mods.AUTOPLAY, Mods.AUTOPILOT, Mods.CINEMA,
 	Mods.RANDOM, Mods.TARGET, Mods.SCOREV2, Mods.MIRROR,

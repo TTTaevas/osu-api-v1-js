@@ -5,7 +5,7 @@ export interface Replay {
 	/**
 	 * Encoded LZMA stream
 	 */
-	content: string,
+	content: string
 	/**
 	 * The encoding `content` uses, should always be "base64"
 	 */

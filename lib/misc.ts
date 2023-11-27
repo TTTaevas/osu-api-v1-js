@@ -11,19 +11,19 @@ export enum Gamemodes {
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21
 	 */
-	OSU 	= 0,
+	OSU		= 0,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21taiko
 	 */
-	TAIKO = 1,
+	TAIKO	= 1,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21catch
 	 */
-	CTB 	= 2,
+	CTB		= 2,
 	/**
 	 * https://osu.ppy.sh/wiki/en/Game_mode/osu%21mania
 	 */
-	MANIA = 3,
+	MANIA	= 3,
 }
 
 
@@ -34,7 +34,7 @@ export enum Gamemodes {
  * @returns An Array of Strings, each string representing a mod
  */
 export function getMods(value: Mods): string[] {
-	let arr: string[] = []
+	const arr: string[] = []
 	for (let bit = 1; bit != 0; bit <<= 1) { 
 		if ((value & bit) != 0 && bit in Mods) {arr.push(Mods[bit])}
 	}
@@ -67,20 +67,28 @@ export function getLength(seconds: number): string {
 export const getURL = {
 	/**
 	 * @param beatmap An Object with the `beatmapset_id` of the Beatmap
+	 * @param server (defaults to "https://assets.ppy.sh") The server hosting the file
 	 * @returns The URL of a 900x250 JPEG image
 	 */
-	beatmapCoverImage: (beatmap: {beatmapset_id: number} | Beatmap): string => `https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`,
+	beatmapCoverImage: (beatmap: {beatmapset_id: number} | Beatmap, server: string = "https://assets.ppy.sh"): string => {
+		return `${server}/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`
+	},
 	/**
 	 * @param beatmap An Object with the `beatmapset_id` of the Beatmap
+	 * @param server (defaults to "https://b.ppy.sh") The server hosting the file
 	 * @returns The URL of a 160x120 JPEG image
 	 */
-	beatmapCoverThumbnail: (beatmap: {beatmapset_id: number} | Beatmap): string => `https://b.ppy.sh/thumb/${beatmap.beatmapset_id}l.jpg`,
-
+	beatmapCoverThumbnail: (beatmap: {beatmapset_id: number} | Beatmap, server: string = "https://b.ppy.sh"): string => {
+		return `${server}/thumb/${beatmap.beatmapset_id}l.jpg`
+	},
 	/**
 	 * @param user An Object with the `user_id` of the User
+	 * @param server (defaults to "https://s.ppy.sh") The server hosting the file
 	 * @returns The URL of a JPEG image of variable proportions (max and ideally 256x256)
 	 */
-	userProfilePicture: (user: {user_id: number} | User): string => `https://s.ppy.sh/a/${user.user_id}`,
+	userProfilePicture: (user: {user_id: number} | User, server: string = "https://s.ppy.sh"): string => {
+		return `${server}/a/${user.user_id}`
+	},
 
 	/**
 	 * The URLs in that Object do not use HTTPS, and instead (try to) open the osu! client in order to do something
@@ -130,7 +138,7 @@ export const getURL = {
  * @param mods The Mods to which the Beatmap will be adapted
  * @returns The Beatmap, but adjusted to the Mods
  */
-export const adjustBeatmapStatsToMods: (beatmap: Beatmap, mods: Mods) => Beatmap = (beatmap: Beatmap, mods: Mods) => {
+export const adjustBeatmapStatsToMods = (beatmap: Beatmap, mods: Mods): Beatmap => {
 	beatmap = Object.assign({}, beatmap) // Do not change the original Beatmap outside this function
 	const arr = getMods(mods)
 	const convertARtoMS = (ar: number) => {

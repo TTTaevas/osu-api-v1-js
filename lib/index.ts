@@ -1,13 +1,13 @@
 import fetch, { FetchError } from "node-fetch"
 import { User } from "./user.js"
-import { Score, ScoreWithBeatmapid } from "./score.js"
+import { Score, ScoreWithBeatmapid, ScoreWithBeatmapidReplayavailablePp, ScoreWithReplayavailablePp } from "./score.js"
 import { Beatmap, Categories, Genres, Languages } from "./beatmap.js"
 import { Match, MultiplayerModes, WinConditions } from "./match.js"
 import { Mods, unsupported_mods } from "./mods.js"
 import { Replay } from "./replay.js"
 import { Gamemodes, getMods, getLength, getURL, adjustBeatmapStatsToMods } from "./misc.js"
 
-export {Gamemodes, User, Score, ScoreWithBeatmapid, Mods, Replay}
+export {Gamemodes, User, Score, ScoreWithBeatmapid, ScoreWithBeatmapidReplayavailablePp, ScoreWithReplayavailablePp, Mods, Replay}
 export {Beatmap, Categories, Genres, Languages}
 export {Match, MultiplayerModes, WinConditions}
 export {getMods, getLength, getURL, adjustBeatmapStatsToMods}
@@ -103,7 +103,7 @@ export class API {
 	 * @param endpoint Basically the endpoint, what comes in the URL after `api/`
 	 * @param parameters The things to specify in the request, such as the beatmap_id when looking for a beatmap
 	 * @param number_try How many attempts there's been to get the data
-	 * @returns A Promise with either the API's response or `false` upon failing
+	 * @returns A Promise with the API's response
 	 */
 	private async request(endpoint: string, parameters: string, number_try: number = 1): Promise<any> {
 		const max_tries = 5
@@ -123,7 +123,7 @@ export class API {
 			this.log(true, error.message)
 			err = `${error.name} (${error.errno})`
 		})
-		
+
 		if (!response || !response.ok) {
 			if (response) {
 				err = response.statusText
@@ -146,7 +146,7 @@ export class API {
 
 			throw new APIError(err, this.server, endpoint, parameters)
 		}
-		
+
 		this.log(false, response.statusText, response.status, {endpoint, parameters})
 		let json = await response.json()
 		if (Array.isArray(json) && !json.length) {
@@ -160,7 +160,7 @@ export class API {
 				throw new APIError("Match not available.", this.server, endpoint, parameters)
 			}
 		}
-		return json
+		return correctType(json)
 	}
 
 	/**
@@ -169,23 +169,32 @@ export class API {
 	 * @returns A Promise with a `User` found with the search
 	 */
 	async getUser(gamemode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<User> {
-		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
-		let response = await this.request("get_user", `m=${gamemode}&${lookup}`) as User[]
-		return correctType(response[0])
+		const lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
+		const response = await this.request("get_user", `m=${gamemode}&${lookup}`) as User[]
+		return response[0]
 	}
 
 	/**
 	 * @param limit The maximum number of Scores to get, **cannot exceed 100**
 	 * @param gamemode The `User`'s `Gamemode`
-	 * @param user An Object with either a `user_id` or a `username` (ignores `username` if `user_id` is specified)
-	 * @param plays The `User`'s top pp plays/`Scores` or the `User`'s plays/`Scores` within the last 24 hours
-	 * @returns A Promise with an array of `Scores` set by the `User` in a specific `Gamemode`
+	 * @param user An Object with either a `user_id` or a `username` (`user_id` is preferred)
+	 * @returns A Promise with an array of `Scores` set by the `User` within the last 24 hours in a specific `Gamemode`
 	 */
-	async getUserScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User, plays: "best" | "recent"):
-	Promise<ScoreWithBeatmapid[]> {
-		let lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
-		let response = await this.request(`get_user_${plays}`, `${lookup}&m=${gamemode}&limit=${limit}`) as Score[]
-		return correctType(response)
+	async getUserBestScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User):
+	Promise<ScoreWithBeatmapidReplayavailablePp[]> {
+		const lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
+		return await this.request("get_user_best", `${lookup}&m=${gamemode}&limit=${limit}`)
+	}
+
+	/**
+	 * @param limit The maximum number of Scores to get, **cannot exceed 100**
+	 * @param gamemode The `User`'s `Gamemode`
+	 * @param user An Object with either a `user_id` or a `username` (`user_id` is preferred)
+	 * @returns A Promise with an array of `Scores` set by the `User` within the last 24 hours in a specific `Gamemode`
+	 */
+	async getUserRecentScores(limit: number, gamemode: Gamemodes, user: {user_id?: number, username?: string} | User): Promise<ScoreWithBeatmapid[]> {
+		const lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
+		return await this.request("get_user_recent", `${lookup}&m=${gamemode}&limit=${limit}`)
 	}
 
 	/**
@@ -198,10 +207,10 @@ export class API {
 	async getBeatmap(beatmap: {beatmap_id: number} | Beatmap, mods: Mods = Mods.NONE, gamemode?: Gamemodes): Promise<Beatmap> {
 		if (getMods(mods).includes(Mods[Mods.NIGHTCORE]) && !getMods(mods).includes(Mods[Mods.DOUBLETIME])) {mods -= Mods.NIGHTCORE - Mods.DOUBLETIME}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
-		let g = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
+		const g = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
 	
-		let response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}${g}`) as Beatmap[]
-		return adjustBeatmapStatsToMods(correctType(response[0]), mods)
+		const response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}&mods=${mods}${g}`) as Beatmap[]
+		return adjustBeatmapStatsToMods(response[0], mods)
 	}
 
 	/**
@@ -222,10 +231,11 @@ export class API {
 	): Promise<Beatmap[]> {
 		if (getMods(mods).includes(Mods[Mods.NIGHTCORE]) && !getMods(mods).includes(Mods[Mods.DOUBLETIME])) {mods -= Mods.NIGHTCORE - Mods.DOUBLETIME}
 		unsupported_mods.forEach((mod) => getMods(mods!).includes(Mods[mod]) ? mods! -= mod : mods! -= 0)
+
+		const mode = gamemode.gamemode == "all" ? "" : `&m=${gamemode.gamemode}`
+		const convert = gamemode.allow_converts ? "a=1" : "a=0"
 		let lookup = `mods=${mods}`
-		let mode = gamemode.gamemode == "all" ? "" : `&m=${gamemode.gamemode}`
-		let convert = gamemode.allow_converts ? "a=1" : "a=0"
-		
+
 		if (beatmap) {
 			if (beatmap.beatmapset_id !== undefined) {
 				lookup += `&s=${beatmap.beatmapset_id}`
@@ -249,9 +259,8 @@ export class API {
 			lookup += x.substring(0, x.indexOf("Z") - 4)
 		}
 
-		let response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`) as Beatmap[]
-		let beatmaps: Beatmap[] = response.map((b: Beatmap) => adjustBeatmapStatsToMods(correctType(b), mods || Mods.NONE))
-		return beatmaps
+		const response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`) as Beatmap[]
+		return response.map((b: Beatmap) => adjustBeatmapStatsToMods(correctType(b), mods || Mods.NONE))
 	}
 
 	/**
@@ -263,10 +272,9 @@ export class API {
 	 * @returns A Promise with an array of `Scores` set on a beatmap
 	 */
 	async getBeatmapScores(limit: number, gamemode: Gamemodes, beatmap: {beatmap_id: number} | Beatmap,
-	user?: {user_id?: number, username?: string} | User, mods?: Mods): Promise<Score[]> {
-		let user_lookup = user ? user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string` : ""
-		let response = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${gamemode}${mods !== undefined ? "&mods="+mods : ""}${user_lookup}&limit=${limit}`)
-		return correctType(response) as Score[]
+	user?: {user_id?: number, username?: string} | User, mods?: Mods): Promise<ScoreWithReplayavailablePp[]> {
+		const user_lookup = user ? user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string` : ""
+		return await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${gamemode}${mods !== undefined ? "&mods="+mods : ""}${user_lookup}&limit=${limit}`)
 	}
 
 	/**
@@ -276,10 +284,9 @@ export class API {
 	 * see https://docs.ripple.moe/docs/api/peppy
 	 */
 	async getMatch(id: number): Promise<Match> {
-		let response = await this.request("get_match", `mp=${id}`)
-		return correctType(response) as Match
+		return await this.request("get_match", `mp=${id}`)
 	}
-	
+
 	/**
 	 * Specify the gamemode the score was set in, then say if you know the id of the `Score` OR if you know the score's `User`, `Beatmap`, and `Mods`
 	 * @param gamemode A number representing the `Gamemode` the `Score` was set in
@@ -290,9 +297,9 @@ export class API {
 	 */
 	async getReplay(gamemode: Gamemodes, replay: {score?: {score_id: number} | Score,
 	search?: {user: {user_id?: number, username?: string} | User, beatmap: {beatmap_id: number} | Beatmap, mods: Mods}}): Promise<Replay> {
+		const [score, search] = [replay.score, replay.search]
 		let lookup = ""
-		let [score, search] = [replay.score, replay.search]
-
+		
 		if (score !== undefined) {
 			lookup = `s=${score.score_id}`
 		} else if (search !== undefined) {
@@ -305,7 +312,6 @@ export class API {
 			lookup += `&mods=${search.mods}`
 		}
 
-		let response = await this.request("get_replay", `${lookup}&m=${gamemode}`)
-		return correctType(response) as Replay
+		return await this.request("get_replay", `${lookup}&m=${gamemode}`)
 	}
 }

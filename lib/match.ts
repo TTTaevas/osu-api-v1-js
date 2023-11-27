@@ -2,20 +2,20 @@
  * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#team-mode-gameplay
  */
 export enum MultiplayerModes {
-	"HEAD TO HEAD" = 0,
-	"TAG CO-OP" 	 = 1,
-	"TEAM VS" 		 = 2,
-	"TAG TEAM VS"  = 3,
+	"HEAD TO HEAD"	= 0,
+	"TAG CO-OP"		= 1,
+	"TEAM VS"		= 2,
+	"TAG TEAM VS"	= 3,
 }
 
 /**
  * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#win-condition
  */
 export enum WinConditions {
-	SCORE 		 = 0,
-	ACCURACY 	 = 1,
-	COMBO 		 = 2,
-	"SCORE V2" = 3,
+	SCORE		= 0,
+	ACCURACY	= 1,
+	COMBO 		= 2,
+	"SCORE V2"	= 3,
 }
 
 export interface Match {
@@ -23,9 +23,9 @@ export interface Match {
 	 * Has the info about the match that is not related to what's been played
 	 */
 	match: {
-		match_id: number,
-		name: string,
-		start_time: Date,
+		match_id: number
+		name: string
+		start_time: Date
 		/**
 		 * If the match is not disbanded, null
 		 */
@@ -45,32 +45,32 @@ export interface Match {
 		 */
 		mods: number
 		scores: {
-			slot: number,
+			slot: number
 			/**
 			 * 0 if no team, 1 if blue, 2 if red
 			 */
-			team: number,
-			user_id: number,
-			score: number,
-			maxcombo: number,
+			team: number
+			user_id: number
+			score: number
+			maxcombo: number
 			/**
 			 * Is always 0, "is not used" according to documentation
 			 */
-			rank: number,
-			count50: number,
-			count100: number,
-			count300: number,
-			countmiss: number,
-			countgeki: number,
-			countkatu: number,
+			rank: number
+			count50: number
+			count100: number
+			count300: number
+			countmiss: number
+			countgeki: number
+			countkatu: number
 			/**
 			 * Documentation says "If full combo", but should be "If SS/100% accuracy"
 			 */
-			perfect: boolean,
+			perfect: boolean
 			/**
 			 * If the player is alive at the end of the map
 			 */
-			pass: boolean,
+			pass: boolean
 			/**
 			 * Is null if no freemod
 			 */

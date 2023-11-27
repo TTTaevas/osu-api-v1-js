@@ -141,12 +141,12 @@ const testRequests = async(): Promise<boolean> => {
 		"getBeatmapScores: ", api.getBeatmapScores(5, osu.Gamemodes.OSU, {beatmap_id: 129891}, {user_id: 124493}, osu.Mods.HIDDEN + osu.Mods.HARDROCK))
 	if (!isOk(beatmap_scores, !beatmap_scores || (beatmap_scores[0].score >= 132408001 && validate(beatmap_scores, "Score", score_gen)))) okay = false
 
-	const user_best_scores = await <Promise<ReturnType<typeof api.getUserScores> | false>>attempt(
-		"getUserScores (best):", api.getUserScores(10, osu.Gamemodes.OSU, {user_id: 2}, "best")
+	const user_best_scores = await <Promise<ReturnType<typeof api.getUserBestScores> | false>>attempt(
+		"getUserBestScores: ", api.getUserBestScores(90, osu.Gamemodes.OSU, {user_id: 2})
 	)
-	if (!isOk(user_best_scores, !user_best_scores || (user_best_scores.length <= 10 && validate(user_best_scores, "Score", score_gen)))) okay = false
-	const user_recent_scores = await <Promise<ReturnType<typeof api.getUserScores> | false>>attempt(
-		"getUserScores (recent):", api.getUserScores(10, osu.Gamemodes.CTB, {user_id: 8172283}, "recent")
+	if (!isOk(user_best_scores, !user_best_scores || (user_best_scores.length <= 90 && validate(user_best_scores, "Score", score_gen)))) okay = false
+	const user_recent_scores = await <Promise<ReturnType<typeof api.getUserRecentScores> | false>>attempt(
+		"getUserRecentScores: ", api.getUserRecentScores(10, osu.Gamemodes.CTB, {user_id: 8172283})
 	)
 	if (!isOk(user_recent_scores, !user_recent_scores || (user_recent_scores.length <= 10 && validate(user_recent_scores, "Score", score_gen)))) okay = false
 
