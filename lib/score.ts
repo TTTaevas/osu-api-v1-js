@@ -41,10 +41,16 @@ export interface Score {
 	rank: string
 }
 
+/**
+ * This is the kind of score you can expect from the API's `getUserRecentScores`
+ */
 export interface ScoreWithBeatmapid extends Score {
 	beatmap_id: number
 }
 
+/**
+ * This is the kind of score you can expect from the API's `getBeatmapScores`
+ */
 export interface ScoreWithReplayavailablePp extends Score {
 	/**
 	 * @remarks It can't be null, because ScoreWithReplayavailablePp is only available for scores that haven't failed
@@ -58,7 +64,13 @@ export interface ScoreWithReplayavailablePp extends Score {
 	replay_available: boolean
 }
 
+/**
+ * This is the kind of score you can expect from the API's `getUserBestScores`
+ */
 export interface ScoreWithBeatmapidReplayavailablePp extends ScoreWithBeatmapid, ScoreWithReplayavailablePp {
+	/**
+	 * @remarks It can't be null, because ScoreWithBeatmapidReplayavailablePp is only available for scores that haven't failed
+	 */
 	score_id: number
 	/**
 	 * @remarks It can't be null, because ScoreWithBeatmapidReplayavailablePp is only available for scores that are worth something

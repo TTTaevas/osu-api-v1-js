@@ -56,23 +56,31 @@ logUserTopPlayBeatmap("Doomsday fanboy")
 `api.getUser()` allows you to get a User by specifying a gamemode and a username or an id!
 
 ```javascript
-// get an `User` for id 7276846 and for the Taiko gamemode
+// get a `User` for id 7276846 and for the Taiko gamemode
 await api.getUser(osu.Gamemodes.TAIKO, {user_id: 7276846})
-// get an `User` for username "Log Off Now" and for the osu! gamemode
+// get a `User` for username "Log Off Now" and for the osu! gamemode
 await api.getUser(osu.Gamemodes.OSU, {username: "Log Off Now"})
 ```
 
-### await api.getUserScores()
+### await api.getUserBestScores()
 
-`api.getUserScores()` allows you to get the recent or the best Scores of a User by specifying a Gamemode, a username or an id, and whether you want their recent Scores or their best Scores, plus how many Scores you want. (from 1 to 100)
+`api.getUserBestScores()` allows you to get the best (pp-wise) Scores of a User by specifying the maximum amount of Scores you want, a Gamemode, and a username or an id!
 
 ```javascript
 // get an array of `Score`s that represent the best 3 scores of the `User` with username "mrekk"
-await api.getUserScores(3, osu.Gamemodes.OSU, {username: "mrekk"}, "best")
+await api.getUserBestScores(3, osu.Gamemodes.OSU, {username: "mrekk"})
+// get an array of `Score`s that represent the best 50 scores of the `User` with id 418699
+await api.getUserBestScores(50, osu.Gamemodes.OSU, {user_id: 418699})
+```
 
-// get an `User` for id 7276846 and for the Taiko gamemode
+### await api.getUserRecentScores()
+
+`api.getUserRecentScores()` allows you to get the recent or the Scores of a User set during the last 24 hours by specifying the maximum amount of Scores you want, a Gamemode, and a username or an id!
+
+```javascript
+// get a `User` for id 7276846 and for the Taiko gamemode
 let user = await api.getUser(osu.Gamemodes.TAIKO, {user_id: 7276846})
-// get that `User`'s 5 most recent `Score`s
+// get that `User`'s 5 most recent `Score`s (or less if the user has set less than 5 such `Score`s)
 let scores = await api.getUserScores(5, osu.Gamemodes.TAIKO, user, "recent")
 ```
 
@@ -178,7 +186,7 @@ let beatmap_hr = adjustBeatmapToMods(beatmap_nm, osu.Mods.HARDROCK + osu.Mods.DO
 
 ### getURL
 
-`getURL` is an Object with many straight-forward functions that allow you to get an URL to an image (beatmap cover, profile picture...) or an URL that interacts with the osu! game client. (opening osu!direct, spectate a user...)
+`getURL` is an Object with many straight-forward functions that allow you to get a URL to an image (beatmap cover, profile picture...) or a URL that interacts with the osu! game client. (opening osu!direct, spectate a user...)
 
 ```javascript
 // Get the URL of a Beatmap's rectangular cover

@@ -62,7 +62,7 @@ export function getLength(seconds: number): string {
 
 /**
  * This object is a collection of functions that can be useful if you're looking to have an image URL
- * or an URL that interacts directly with the game client!
+ * or a URL that interacts directly with the game client!
  */
 export const getURL = {
 	/**
@@ -133,7 +133,8 @@ export const getURL = {
  * 
  * The properties are namely: 
  * `total_length`, `hit_length`, `bpm`, `diff_size`, `diff_approach`, `diff_overall`, `diff_drain`
- * @remarks NOTE THAT THIS FUNCTION DOESN'T ADJUST `diff_aim`, `diff_speed` OR `difficultyrating`, USE `getBeatmap()` FOR THAT
+ * @remarks Note that this function doesn't adjust `diff_aim`, `diff_speed` or `difficultyrating`!
+ * Making a request using `getBeatmap()` adjusts everything, if you need to adjust any of these three properties
  * @param beatmap The Beatmap to adapt
  * @param mods The Mods to which the Beatmap will be adapted
  * @returns The Beatmap, but adjusted to the Mods
