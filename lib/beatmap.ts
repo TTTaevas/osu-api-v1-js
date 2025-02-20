@@ -1,3 +1,6 @@
+import { Gamemodes } from "./misc.js"
+import { User } from "./user.js"
+
 /**
  * For the `approved` of a `Beatmap` (for example, `Categories[beatmap.approved]` would return "RANKED" if 1) https://osu.ppy.sh/wiki/en/Beatmap/Category
  */
@@ -58,7 +61,7 @@ export interface Beatmap {
 	/**
 	 * Also known as the id of the category the beatmap is in, for example it'd be 1 if it was ranked
 	 */
-	approved: number
+	approved: Categories
 	/**
 	 * The length of the beatmap in seconds **with** the breaks
 	 */
@@ -94,7 +97,7 @@ export interface Beatmap {
 	/**
 	 * The number representing the Gamemode for which the API responsed (it may not be the requested Gamemode if the beatmap is exclusive to Taiko/CTB/Mania)
 	 */
-	mode: number
+	mode: Gamemodes
 	count_normal: number
 	count_slider: number
 	count_spinner: number
@@ -117,13 +120,13 @@ export interface Beatmap {
 	 * As it's shown when you start playing the beatmap (so it's kana/kanji if japanese name)
 	 */
 	title_unicode: string
-	creator: string
-	creator_id: number
+	creator: User["username"]
+	creator_id: User["user_id"]
 	bpm: number
 	source: string
 	tags: string
-	genre_id: number
-	language_id: number
+	genre_id: Genres
+	language_id: Languages
 	favourite_count: number
 	rating: number
 	storyboard: boolean

@@ -1,3 +1,7 @@
+import { Beatmap } from "./beatmap.js"
+import { Mods } from "./mods.js"
+import { User } from "./user.js"
+
 export interface Score {
 	/**
 	 * The id of the score!
@@ -5,7 +9,7 @@ export interface Score {
 	 */
 	score_id: number | null
 	/**
-	 * The score itself, for example 923,357 (without the comma ",")
+	 * The score itself, for example `923357`
 	 */
 	score: number
 	maxcombo: number
@@ -26,11 +30,10 @@ export interface Score {
 	 */
 	perfect: boolean
 	/**
-	 * Bitwise flag, feel free to use `getMods` to see the mods in a more readable way!
 	 * @remarks If it has Nightcore, it also has DoubleTime
 	 */
-	enabled_mods: number
-	user_id: number
+	enabled_mods: Mods[]
+	user_id: User["user_id"]
 	/**
 	 * Roughly (or just after) when the last note was hit
 	 */
@@ -45,7 +48,7 @@ export interface Score {
  * This is the kind of score you can expect from the API's `getUserRecentScores`
  */
 export interface ScoreWithBeatmapid extends Score {
-	beatmap_id: number
+	beatmap_id: Beatmap["beatmap_id"]
 }
 
 /**

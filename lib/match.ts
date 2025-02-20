@@ -1,3 +1,7 @@
+import { Gamemodes } from "./misc.js"
+import { Mods } from "./mods.js"
+import { User } from "./user.js"
+
 /**
  * https://osu.ppy.sh/wiki/en/Client/Interface/Multiplayer#team-mode-gameplay
  */
@@ -36,25 +40,25 @@ export interface Match {
 		start_time: Date
 		end_time: Date | null
 		beatmap_id: number
-		play_mode: number
+		play_mode: Gamemodes
 		match_type: number
-		scoring_type: number
-		team_type: number
+		scoring_type: WinConditions
+		team_type: MultiplayerModes
 		/**
 		 * Bitwise flag, feel free to use `getMods` to see the mods in a more readable way! Do note that individual scores have a nullable `enabled_mods` property
 		 */
-		mods: number
+		mods: Mods[]
 		scores: {
 			slot: number
 			/**
 			 * 0 if no team, 1 if blue, 2 if red
 			 */
 			team: number
-			user_id: number
+			user_id: User["user_id"]
 			score: number
 			maxcombo: number
 			/**
-			 * Is always 0, "is not used" according to documentation
+			 * Is always 0, "is not used" according to API documentation
 			 */
 			rank: number
 			count50: number
@@ -64,7 +68,7 @@ export interface Match {
 			countgeki: number
 			countkatu: number
 			/**
-			 * Documentation says "If full combo", but should be "If SS/100% accuracy"
+			 * API Documentation says "If full combo", but should be "If SS/100% accuracy"
 			 */
 			perfect: boolean
 			/**
@@ -74,7 +78,7 @@ export interface Match {
 			/**
 			 * Is null if no freemod
 			 */
-			enabled_mods: number | null
+			enabled_mods: Mods[] | null
 		}[]
 	}[]
 }

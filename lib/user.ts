@@ -1,3 +1,5 @@
+import { Beatmap } from "./beatmap.js"
+
 export interface User {
 	user_id: number
 	username: string
@@ -25,8 +27,8 @@ export interface User {
 	pp_country_rank: number
 	events: {
 		display_html: string
-		beatmap_id: number
-		beatmapset_id: number
+		beatmap_id: Beatmap["beatmap_id"]
+		beatmapset_id: Beatmap["beatmapset_id"]
 		date: Date
 		/**
 		 * How "epic" this event is (between 1 and 32)

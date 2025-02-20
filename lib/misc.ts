@@ -1,5 +1,5 @@
 import { Beatmap } from "./beatmap.js"
-import { Mods } from "./mods.js"
+import { Mods, unsupported_mods } from "./mods.js"
 import { User } from "./user.js"
 
 // ENUMS COMMON TO MULTIPLE STUFF
@@ -30,15 +30,45 @@ export enum Gamemodes {
 // FUNCTIONS (no other file should hold exportable functions)
 
 /**
- * @param value A number representing the `Mods`
- * @returns An Array of Strings, each string representing a mod
+ * This function turns a number that represents `Mods` into an array of `Mods[]`, which makes it useful to translate responses from the API server
+ * @param mods The number representing the `Mods`, usually from the response received after a request to the API server
+ * @returns An array with all the appropriate `Mods`
  */
-export function getMods(value: Mods): string[] {
-	const arr: string[] = []
-	for (let bit = 1; bit != 0; bit <<= 1) { 
-		if ((value & bit) != 0 && bit in Mods) {arr.push(Mods[bit])}
+export function modsBitsToArray(mods: Mods): Mods[] {
+	const arr: Mods[] = []
+	for (let bit = 1; bit != 0; bit <<= 1) {
+		if ((mods & bit) != 0 && bit in Mods) {
+			arr.push(bit)
+		}
 	}
 	return arr
+}
+
+/**
+ * This function turns an array of `Mods` into a number that the API server can understand
+ * @remarks One useful thing about it is the distinction made between `[]` (lack of mods) and `[Mods.NOMOD]`; specifying the nomod mod can alter requests
+ * @param mods An array of `Mods`
+ * @returns A number representing the `Mods`, or `null` if the array is empty
+ */
+export function modsArrayToBits(mods: Mods[]): Mods | null {
+	return !mods.length ? null : mods.reduce((a, b) => a + b)
+}
+
+/**
+ * This function is called automatically for `getBeatmap` and `getBeatmaps`, you may use it yourself if it is necessary for anything else
+ * @param mods An array of `Mods`
+ * @returns `mods` without the unsupported mods, and with `Mods.DOUBLETIME` if `Mods.NIGHTCORE` was in there
+ */
+export function removeUnsupportedMods(mods: Mods[]): Mods[] {
+	if (mods.includes(Mods.NIGHTCORE) === true && mods.includes(Mods.DOUBLETIME) === false) {
+		mods.push(Mods.DOUBLETIME)
+	}
+	unsupported_mods.forEach((unsupported_mod) => {
+		while (mods.indexOf(unsupported_mod) !== -1) {
+			mods.splice(mods.indexOf(unsupported_mod), 1)
+		}
+	})
+	return mods
 }
 
 /**
@@ -70,7 +100,7 @@ export const getURL = {
 	 * @param server (defaults to "https://assets.ppy.sh") The server hosting the file
 	 * @returns The URL of a 900x250 JPEG image
 	 */
-	beatmapCoverImage: (beatmap: {beatmapset_id: number} | Beatmap, server: string = "https://assets.ppy.sh"): string => {
+	beatmapCoverImage: (beatmap: {beatmapset_id: Beatmap["beatmapset_id"]} | Beatmap, server: string = "https://assets.ppy.sh"): string => {
 		return `${server}/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`
 	},
 	/**
@@ -78,16 +108,16 @@ export const getURL = {
 	 * @param server (defaults to "https://b.ppy.sh") The server hosting the file
 	 * @returns The URL of a 160x120 JPEG image
 	 */
-	beatmapCoverThumbnail: (beatmap: {beatmapset_id: number} | Beatmap, server: string = "https://b.ppy.sh"): string => {
+	beatmapCoverThumbnail: (beatmap: {beatmapset_id: Beatmap["beatmapset_id"]} | Beatmap, server: string = "https://b.ppy.sh"): string => {
 		return `${server}/thumb/${beatmap.beatmapset_id}l.jpg`
 	},
 	/**
 	 * @param user An Object with the `user_id` of the User
-	 * @param server (defaults to "https://s.ppy.sh") The server hosting the file
+	 * @param server (defaults to "https://a.ppy.sh") The server hosting the file
 	 * @returns The URL of a JPEG image of variable proportions (max and ideally 256x256)
 	 */
-	userProfilePicture: (user: {user_id: number} | User, server: string = "https://s.ppy.sh"): string => {
-		return `${server}/a/${user.user_id}`
+	userProfilePicture: (user: {user_id: User["user_id"]} | User, server: string = "https://a.ppy.sh"): string => {
+		return `${server}/${user.user_id}`
 	},
 
 	/**
@@ -114,17 +144,17 @@ export const getURL = {
 		 * @param beatmap An Object with the ID of a Beatmap
 		 * @returns The URL that may be used by someone to attempt to open a beatmap through osu!direct
 		 */
-		beatmap: (beatmap: {beatmap_id: number} | Beatmap) => `osu://b/${beatmap.beatmap_id}`,
+		beatmap: (beatmap: {beatmap_id: Beatmap["beatmap_id"]} | Beatmap) => `osu://b/${beatmap.beatmap_id}`,
 		/**
 		 * @param beatmap An Object with the set ID of a Beatmap
 		 * @returns The URL that may be used by someone to attempt to open a beatmapset through osu!direct
 		 */
-		beatmapset: (beatmap: {beatmapset_id: number} | Beatmap) => `osu://s/${beatmap.beatmapset_id}`,
+		beatmapset: (beatmap: {beatmapset_id: Beatmap["beatmapset_id"]} | Beatmap) => `osu://s/${beatmap.beatmapset_id}`,
 		/**
 		 * @param user An Object with the ID of a User
 		 * @returns The URL that may be used by someone to attempt to spectate someone in the game client
 		 */
-		spectateUser: (user: {user_id: number} | User) => `osu://spectate/${user}`
+		spectateUser: (user: {user_id: User["user_id"]} | User) => `osu://spectate/${user}`
 	}
 }
 
@@ -139,9 +169,12 @@ export const getURL = {
  * @param mods The Mods to which the Beatmap will be adapted
  * @returns The Beatmap, but adjusted to the Mods
  */
-export const adjustBeatmapStatsToMods = (beatmap: Beatmap, mods: Mods): Beatmap => {
+export const adjustBeatmapStatsToMods = (beatmap: Beatmap, mods: Mods | Mods[]): Beatmap => {
 	beatmap = Object.assign({}, beatmap) // Do not change the original Beatmap outside this function
-	const arr = getMods(mods)
+	if (!Array.isArray(mods)) {
+		mods = modsBitsToArray(mods)
+	}
+
 	const convertARtoMS = (ar: number) => {
 		ar *= 10
 		let ms = 1800 // AR 0's ms
@@ -149,21 +182,21 @@ export const adjustBeatmapStatsToMods = (beatmap: Beatmap, mods: Mods): Beatmap 
 		return ms
 	}
 
-	if (arr.includes(Mods[Mods.EASY])) {
+	if (mods.includes(Mods.EASY)) {
 		beatmap.diff_size /= 2
 		beatmap.diff_approach /= 2
 		beatmap.diff_overall /= 2
 		beatmap.diff_drain /= 2
 	}
 
-	if (arr.includes(Mods[Mods.HARDROCK])) {
+	if (mods.includes(Mods.HARDROCK)) {
 		beatmap.diff_size = Math.min(10, beatmap.diff_size * 1.3)
 		beatmap.diff_approach = Math.min(10, beatmap.diff_approach * 1.4)
 		beatmap.diff_overall = Math.min(10, beatmap.diff_overall * 1.4)
 		beatmap.diff_drain = Math.min(10, beatmap.diff_drain * 1.4)
 	}
 
-	if (arr.includes(Mods[Mods.DOUBLETIME]) || arr.includes(Mods[Mods.NIGHTCORE])) {
+	if (mods.includes(Mods.DOUBLETIME) || mods.includes(Mods.NIGHTCORE)) {
 		beatmap.total_length /= 1.5
 		beatmap.hit_length /= 1.5
 		beatmap.bpm *= 1.5
@@ -171,7 +204,7 @@ export const adjustBeatmapStatsToMods = (beatmap: Beatmap, mods: Mods): Beatmap 
 		beatmap.diff_overall = (80 - ((80 - 6 * beatmap.diff_overall) / 1.5)) / 6
 	}
 
-	if (arr.includes(Mods[Mods.HALFTIME])) {
+	if (mods.includes(Mods.HALFTIME)) {
 		beatmap.total_length /= 0.75
 		beatmap.hit_length /= 0.75
 		beatmap.bpm *= 0.75

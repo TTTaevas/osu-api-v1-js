@@ -1,6 +1,6 @@
 /**
- * So you can do something like `Mods.HIDDEN + Mods["HARDROCK"]` instead of thinking about the bitwise number
- * (https://github.com/ppy/osu-api/wiki#mods)
+ * It's a bitwise enum, works in such a way that `1` would be `NOFAIL` while `10` would be `HIDDEN + EASY`
+ * https://github.com/ppy/osu-api/wiki#mods
  */
 export enum Mods {
 	NONE           = 0,
@@ -48,6 +48,7 @@ export enum Mods {
 
 /**
  * API returns the SR (and pp stuff) of a Beatmap as 0/null if any of those mods are included
+ * @remarks `removeUnsupportedMods` takes care of automatically removing/replacing them
  */
 export const unsupported_mods = [
 	Mods.NOFAIL, Mods.HIDDEN, Mods.SPUNOUT, Mods.FADEIN, Mods.NIGHTCORE,
