@@ -4,6 +4,7 @@
 *.log
 lib/
 docs/
+docs_plugins/
 test.*
 yarn.lock
 tsconfig.json

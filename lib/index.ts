@@ -203,7 +203,7 @@ export class API {
 	/**
 	 * Look for and get a singular `Beatmap` with this!
 	 * @param beatmap An Object with the ID of the difficulty/`Beatmap` of the beatmapset
-	 * @param mods A number representing the `Mods` to apply, defaults to 0 (no mod/`None`)
+	 * @param mods An array of `Mods` to apply, defaults to an empty array
 	 * @param gamemode The gamemode the beatmap is in (useful if you wanna convert, for example, an osu! map to taiko)
 	 * @returns A Promise with a `Beatmap`
 	 */
@@ -222,7 +222,7 @@ export class API {
 	 * @param limit The maximum number of `Beatmap`s there should be in the array, **cannot exceed 500**
 	 * @param gamemode Filter in the beatmaps by the gamemode (unless "all"), but if `allow_converts` then instead convert if possible the beatmaps to that gamemode
 	 * @param beatmap Will look for its `beatmapset_id` (if undefined, its `beatmap_id` (if undefined, its `file_md5`))
-	 * @param mods An array of `Mods` to apply, defaults to an empty array (no mod)
+	 * @param mods An array of `Mods` to apply, defaults to an empty array
 	 * @param set_owner The `User` that owns the beatmapset
 	 * @param since Filters out any `Beatmap` of `Category < 0`, and any `Beatmap` with an `approved_date` older than what's given
 	 */
@@ -295,7 +295,7 @@ export class API {
 		match.games.forEach((g) => {
 			g.mods = Mods.bitsToArray(g.mods as any)
 			g.scores.forEach((s) => {
-				s.enabled_mods = Mods.bitsToArray(s.enabled_mods as any)
+				s.enabled_mods = s.enabled_mods === null ? null : Mods.bitsToArray(s.enabled_mods as any)
 			})
 		})
 		return match

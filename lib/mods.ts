@@ -63,7 +63,7 @@ export namespace Mods {
 
 	/**
 	 * This function is called automatically for `getBeatmap` and `getBeatmaps`, you may use it yourself if it is necessary for anything else
-	 * @param mods An array of `Mods`
+	 * @param mods An array of `Mods` from which the so-called "unsupported mods" will be removed
 	 * @returns `mods` without the unsupported mods, and with `Mods.DOUBLETIME` if `Mods.NIGHTCORE` was in there
 	 */
 	export function removeUnsupported(mods: Mods[]): Mods[] {
@@ -96,7 +96,7 @@ export namespace Mods {
 	/**
 	 * This function turns an array of `Mods` into a number that the API server can understand
 	 * @remarks One useful thing about it is the distinction made between `[]` (lack of mods) and `[Mods.NOMOD]`; specifying the nomod mod can alter requests
-	 * @param mods An array of `Mods`
+	 * @param mods An array of `Mods` that will be turned into bits
 	 * @returns A number representing the `Mods`, or `null` if the array is empty
 	 */
 	export function arrayToBits(mods: Mods[]): Mods | null {

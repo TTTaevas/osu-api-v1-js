@@ -1,6 +1,6 @@
 {
   "name": "osu-api-v1-js",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Package to easily access osu!api version 1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "prepublish": "yarn run build",
     "build": "tsc",
     "test": "yarn run build && node ./dist/test.js",
-    "doc": "npx typedoc lib/index.ts --cname osu-v1.taevas.xyz"
+    "doc": "npx typedoc lib/index.ts --cname osu-v1.taevas.xyz --plugin ./docs_plugins/visitors.ts"
   },
   "engines": {
     "node": ">=18.0.0"
