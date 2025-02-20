@@ -1,16 +1,15 @@
-import fetch, { FetchError } from "node-fetch"
 import { User } from "./user.js"
 import { Score, ScoreWithBeatmapid, ScoreWithBeatmapidReplayavailablePp, ScoreWithReplayavailablePp } from "./score.js"
 import { Beatmap, Categories, Genres, Languages } from "./beatmap.js"
 import { Match, MultiplayerModes, WinConditions } from "./match.js"
-import { Mods, unsupported_mods } from "./mods.js"
+import { Mods } from "./mods.js"
 import { Replay } from "./replay.js"
-import { Gamemodes, getLength, getURL, adjustBeatmapStatsToMods, removeUnsupportedMods, modsBitsToArray, modsArrayToBits } from "./misc.js"
+import { Gamemodes, getLength, getURL } from "./misc.js"
 
 export {Gamemodes, User, Score, ScoreWithBeatmapid, ScoreWithBeatmapidReplayavailablePp, ScoreWithReplayavailablePp, Mods, Replay}
 export {Beatmap, Categories, Genres, Languages}
 export {Match, MultiplayerModes, WinConditions}
-export {getLength, getURL, adjustBeatmapStatsToMods, removeUnsupportedMods, unsupported_mods, modsBitsToArray, modsArrayToBits}
+export {getLength, getURL}
 
 /**
  * *Almost* **everything** in the JSONs the API returns is a string, this function fixes that
@@ -119,9 +118,9 @@ export class API {
 				"User-Agent": "osu-api-v1-js (https://github.com/TTTaevas/osu-api-v1-js)"
 			}
 		})
-		.catch((error: FetchError) => {
-			this.log(true, error.message)
-			err = `${error.name} (${error.errno})`
+		.catch((error) => {
+			this.log(true, error?.message)
+			err = `${error?.name} (${error?.errno})`
 		})
 
 		if (!response || !response.ok) {
@@ -184,7 +183,7 @@ export class API {
 	Promise<ScoreWithBeatmapidReplayavailablePp[]> {
 		const lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 		const scores = await this.request("get_user_best", `${lookup}&m=${gamemode}&limit=${limit}`)
-		scores.forEach((s: any) => s.enabled_mods = modsBitsToArray(s.enabled_mods))
+		scores.forEach((s: any) => s.enabled_mods = Mods.bitsToArray(s.enabled_mods))
 		return scores
 	}
 
@@ -197,7 +196,7 @@ export class API {
 	async getUserRecentScores(limit: number, gamemode: Gamemodes, user: {user_id?: User["user_id"], username?: User["username"]} | User): Promise<ScoreWithBeatmapid[]> {
 		const lookup = user.user_id !== undefined ? `u=${user.user_id}&type=id` : `u=${user.username}&type=string`
 		const scores = await this.request("get_user_recent", `${lookup}&m=${gamemode}&limit=${limit}`)
-		scores.forEach((s: any) => s.enabled_mods = modsBitsToArray(s.enabled_mods))
+		scores.forEach((s: any) => s.enabled_mods = Mods.bitsToArray(s.enabled_mods))
 		return scores
 	}
 
@@ -209,13 +208,13 @@ export class API {
 	 * @returns A Promise with a `Beatmap`
 	 */
 	async getBeatmap(beatmap: {beatmap_id: Beatmap["beatmap_id"]} | Beatmap, mods: Mods[] = [], gamemode?: Gamemodes): Promise<Beatmap> {
-		mods = removeUnsupportedMods(mods)
-		const mods_bits = modsArrayToBits(mods)
+		mods = Mods.removeUnsupported(mods)
+		const mods_bits = Mods.arrayToBits(mods)
 
 		let details = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
 		details += mods_bits !== null ? `&mods=${mods_bits}` : ""
 		const response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}${details}`) as Beatmap[]
-		return adjustBeatmapStatsToMods(response[0], mods)
+		return Mods.adjustBeatmapStats(response[0], mods)
 	}
 
 	/**
@@ -234,8 +233,8 @@ export class API {
 	set_owner?: {user_id?: number, username?: string} | User,
 	since?: Date
 	): Promise<Beatmap[]> {
-		mods = removeUnsupportedMods(mods)
-		const mods_bits = modsArrayToBits(mods)
+		mods = Mods.removeUnsupported(mods)
+		const mods_bits = Mods.arrayToBits(mods)
 
 		const mode = gamemode.gamemode == "all" ? "" : `&m=${gamemode.gamemode}`
 		const convert = gamemode.allow_converts ? "a=1" : "a=0"
@@ -265,7 +264,7 @@ export class API {
 		}
 
 		const response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`) as Beatmap[]
-		return response.map((b) => adjustBeatmapStatsToMods(correctType(b), mods))
+		return response.map((b) => Mods.adjustBeatmapStats(correctType(b), mods))
 	}
 
 	/**
@@ -279,9 +278,9 @@ export class API {
 	async getBeatmapScores(limit: number, gamemode: Gamemodes, beatmap: {beatmap_id: Beatmap["beatmap_id"]} | Beatmap,
 	user?: {user_id?: User["user_id"], username?: User["username"]} | User, mods: Mods[] = []): Promise<ScoreWithReplayavailablePp[]> {
 		const user_lookup = user ? user.user_id !== undefined ? `&u=${user.user_id}&type=id` : `&u=${user.username}&type=string` : ""
-		const mods_bits = modsArrayToBits(mods)
+		const mods_bits = Mods.arrayToBits(mods)
 		const scores = await this.request("get_scores", `b=${beatmap.beatmap_id}&m=${gamemode}${mods_bits !== null ? "&mods="+mods_bits : ""}${user_lookup}&limit=${limit}`)
-		scores.forEach((s: any) => s.enabled_mods = modsBitsToArray(s.enabled_mods))
+		scores.forEach((s: any) => s.enabled_mods = Mods.bitsToArray(s.enabled_mods))
 		return scores
 	}
 
@@ -294,9 +293,9 @@ export class API {
 	async getMatch(id: number): Promise<Match> {
 		const match: Match = await this.request("get_match", `mp=${id}`)
 		match.games.forEach((g) => {
-			g.mods = modsBitsToArray(g.mods as any)
+			g.mods = Mods.bitsToArray(g.mods as any)
 			g.scores.forEach((s) => {
-				s.enabled_mods = modsBitsToArray(s.enabled_mods as any)
+				s.enabled_mods = Mods.bitsToArray(s.enabled_mods as any)
 			})
 		})
 		return match
@@ -322,7 +321,7 @@ export class API {
 		}
 	): Promise<Replay> {
 		const [score_id, search] = [replay.score_id, replay.search]
-		const mods_bits = search?.mods ? modsArrayToBits(search.mods) : null
+		const mods_bits = search?.mods ? Mods.arrayToBits(search.mods) : null
 		let lookup = ""
 		
 		if (score_id !== undefined) {

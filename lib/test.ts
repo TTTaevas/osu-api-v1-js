@@ -24,7 +24,7 @@ function roundTo(n: number, digits: number) {
 }
 
 const checkBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods[], expected: object) => {
-	const bm = osu.adjustBeatmapStatsToMods(b, mods)
+	const bm = osu.Mods.adjustBeatmapStats(b, mods)
 	const stats = {
 		bpm: roundTo(bm.bpm, 2),
 		cs: roundTo(bm.diff_size, 2),
@@ -144,9 +144,8 @@ const testAdjustBeatmapStatsToMods = async (): Promise<boolean> => {
 	let okay = true
 	console.log("\n===> ADJUST BEATMAP STATS TO MODS")
 
-	console.log("\nRequesting a Beatmap once in order to change its stats with mods...")
+	console.log("Requesting a Beatmap once in order to change its stats with mods...")
 	const beatmap = await attempt(api.getBeatmap, {beatmap_id: 2592029}, [osu.Mods.NOFAIL])
-	console.log("done")
 	if (!beatmap) {return false}
 	
 	// Expected AR is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate#table-comparison
@@ -161,35 +160,46 @@ const testAdjustBeatmapStatsToMods = async (): Promise<boolean> => {
 	if (!checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME, osu.Mods.EASY], {bpm: 147, cs: 1.5, ar: -0.33, od: -0.44, hp: 2})) {okay = false}
 	if (!checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME, osu.Mods.HARDROCK], {bpm: 147, cs: 3.9, ar: 8.73, od: 6.76, hp: 5.6})) {okay = false}
 
-	console.log("\nThis beatmap will get requested several times with different mods in order to see if its SR bugs or not")
-	for (const [key, value] of Object.entries(osu.Mods).splice(0, Object.entries(osu.Mods).length / 2)) {
+	const mods: osu.Mods[] = Object.entries(osu.Mods)
+		.filter(([_key, value]) => typeof value === "string")
+		.map(([key, _value]) => Number(key))
+	for (let i = 0; i < mods.length; i++) {
+		const mod = mods[i]
 		// The solution used in getBeatmap() is to simply remove the unsupported mod(s) from the request
 		// So if we were to request a beatmap with such a mod here, we'd be requesting it with NM instead
 		// I honestly just don't wanna make the same request in a row ~15 times :skull:
-		if (osu.unsupported_mods.includes(Number(key))) {
-			if (osu.unsupported_mods[0] !== Number(key)) {
-				console.log("The following mod will not be requested as it'd be pointless:", osu.Mods[Number(key)])
+		if (osu.Mods.unsupported.includes(mod)) {
+			if (osu.Mods.unsupported[0] !== mod) {
+				console.log("The following mod will not be requested as it'd be pointless:", osu.Mods[mod])
 				continue
 			}
 			// Still make one request to check if it's filtering at all
-			console.log("Checking if it is using the unsupported_mods filter as it should with the mod", osu.Mods[Number(key)])
+			console.log("Checking if it is using the Mods.unsupported filter as it should with the mod", osu.Mods[mod])
 		}
 
-		console.log(`Requesting the SR of the Beatmap with mod ${value}...`)
-		const modded_beatmap = await attempt(api.getBeatmap, beatmap, [Number(key)])
+		console.log(`Requesting the SR of the Beatmap with mod ${osu.Mods[mod]}...`)
+		const modded_beatmap = await attempt(api.getBeatmap, beatmap, [mod])
 		if (!modded_beatmap) {return false}
 		if (modded_beatmap.difficultyrating === 0) {
-			console.error(`❌ Beatmaps with the mod ${value} have a difficultyrating of 0!`)
+			console.error(`❌ Beatmaps with the mod ${osu.Mods[mod]} have a difficultyrating of 0!`)
 			return false
 		}
 	}
+
+	console.log("Final request just in case to check if it handles multiple mods...")
+	const multiple_mods_beatmap = await attempt(api.getBeatmap, beatmap, [osu.Mods.HALFTIME, osu.Mods.HARDROCK, osu.Mods.NOFAIL])
+	if (!multiple_mods_beatmap || multiple_mods_beatmap.difficultyrating === 0) {
+		console.error(`❌ Beatmaps with multiple mods have a difficultyrating of 0!`)
+		return false
+	}
+
 	return okay
 }
 
 const test = async (): Promise<void> => {
 	const tests = [
 		testRequests,
-		testAdjustBeatmapStatsToMods
+		testAdjustBeatmapStatsToMods,
 	]
 
 	const results: {test_name: string, passed: boolean}[] = []
