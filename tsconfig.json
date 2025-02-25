@@ -5,7 +5,8 @@
     "target": "ES2022",
     "declaration": true,
     "outDir": "./dist",
-    "strict": true,
-    "skipLibCheck": true
-  }
+    "strict": true
+  },
+  "include": ["./lib/*.ts"],
+  "exclude": ["./docs_plugins"]
 }

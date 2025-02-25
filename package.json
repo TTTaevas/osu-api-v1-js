@@ -1,14 +1,14 @@
 {
   "name": "osu-api-v1-js",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Package to easily access osu!api version 1.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepublish": "yarn run build",
+    "prepublish": "npm run build",
     "build": "tsc",
-    "test": "yarn run build && node ./dist/test.js",
+    "test": "npm run build && node ./dist/test.js",
     "doc": "npx typedoc lib/index.ts --cname osu-v1.taevas.xyz --plugin ./docs_plugins/visitors.ts"
   },
   "engines": {
@@ -25,7 +25,7 @@
     "ajv": "^8.17.1",
     "dotenv": "^16.3.1",
     "ts-json-schema-generator": "^2.3.0",
-    "typedoc": "^0.27.7",
+    "typedoc": "^0.27.9",
     "typescript": "^5.7.3"
   },
   "dependencies": {}
