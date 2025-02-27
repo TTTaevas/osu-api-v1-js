@@ -4,11 +4,16 @@ import util from "util"
 
 import tsj from "ts-json-schema-generator"
 import ajv from "ajv"
+import { expect } from "chai"
+
+// ------
 
 const key = process.env.KEY
 if (key === undefined) {throw new Error("❌ The API key has not been defined in the environment variables! (name of the variable is `KEY`)")}
 const api = new osu.API(key, "all")
 const generator = tsj.createGenerator({path: "lib/index.ts", additionalProperties: true})
+
+// ------
 
 function roundTo(n: number, digits: number) {
 	let negative = false
@@ -39,37 +44,11 @@ const checkBeatmapWithMods = (b: osu.Beatmap, mods: osu.Mods[], expected: object
 	} else if (bm.difficultyrating <= 0) {
 		console.error(`❌ The beatmap's star rating with the mods ${mods.map((m) => osu.Mods[m])} is 0* or below! (it's ${bm.difficultyrating})`)
 		return false
-	} else {
-		console.log(mods.map((m) => osu.Mods[m]), "Beatmaps' stats are looking good!")
-		return true
-	}
-}
-
-// ---------
-
-async function attempt<T extends (...args: any[]) => any>(fun: T, ...args: Parameters<T>): Promise<ReturnType<T> | false> {
-	process.stdout.write(fun.name + ": ")
-	try {
-		const result = await fun.call(api, ...args)
-		return result
-	} catch(err) {
-		console.error(err)
-		return false
-	}
-}
-
-function isOk(response: any, condition?: boolean, depth: number = Infinity) {
-	if (condition === undefined) condition = true
-	if (!response || !condition) {
-		if (Array.isArray(response) && response[0]) {
-			console.log("(only printing the first element of the response array for the error below)")
-			response = response[0]
-		}
-		console.error("❌ Bad response:", util.inspect(response, {colors: true, depth: depth}))
-		return false
 	}
 	return true
 }
+
+// ---------
 
 // ajv will not work properly if type is not changed from string to object where format is date-time
 function fixDate(x: any) {
@@ -88,22 +67,22 @@ function fixDate(x: any) {
 	return x
 }
 
-function validate(object: unknown, schemaName: string): boolean {
+function validate(obj: unknown, schemaName: string): boolean {
 	try {
 		const schema = fixDate(generator.createSchema(schemaName))
 		const ajv_const = new ajv.default({strict: false})
 		ajv_const.addFormat("date-time", true)
 		const validator = ajv_const.compile(schema)
 
-		if (Array.isArray(object)) {
-			for (let i = 0; i < object.length; i++) {
-				const result = validator(object[i])
+		if (Array.isArray(obj)) {
+			for (let i = 0; i < obj.length; i++) {
+				const result = validator(obj[i])
 				if (validator.errors) console.error(util.inspect(validator.errors, {colors: true, depth: 5}))
 				if (!result) return false
 			}
 			return true
 		} else {
-			const result = validator(object)
+			const result = validator(obj)
 			if (validator.errors) console.error(util.inspect(validator.errors, {colors: true, depth: 5}))
 			return result
 		}
@@ -115,91 +94,166 @@ function validate(object: unknown, schemaName: string): boolean {
 
 // ---------
 
-const testRequests = async(): Promise<boolean> => {
-	let okay = true
-	console.log("\n===> REQUESTS")
-
-	const user = await attempt(api.getUser, osu.Gamemodes.OSU, {user_id: 7276846})
-	if (!isOk(user, !user || (user.user_id === 7276846 && validate(user, "User")))) okay = false
-	const beatmap = await attempt(api.getBeatmap, {beatmap_id: 892780})
-	if (!isOk(beatmap, !beatmap || (beatmap.title === "FriendZoned" && validate(beatmap, "Beatmap")))) okay = false
-	const match = await attempt(api.getMatch, 106369699)
-	if (!isOk(match, !match || (match.match.name === "IT: (tout le monde) vs (Adéquat feur)" && validate(match, "Match")))) okay = false
-
-	const beatmap_scores = await attempt(api.getBeatmapScores, 5, osu.Gamemodes.OSU, {beatmap_id: 129891}, {user_id: 124493}, [osu.Mods.HIDDEN, osu.Mods.HARDROCK])
-	if (!isOk(beatmap_scores, !beatmap_scores || (beatmap_scores[0].score >= 132408001 && validate(beatmap_scores, "Score")))) okay = false
-
-	const user_best_scores = await attempt(api.getUserBestScores, 90, osu.Gamemodes.OSU, {user_id: 2})
-	if (!isOk(user_best_scores, !user_best_scores || (user_best_scores.length <= 90 && validate(user_best_scores, "Score")))) okay = false
-	const user_recent_scores = await attempt(api.getUserRecentScores, 10, osu.Gamemodes.CTB, {user_id: 8172283})
-	if (!isOk(user_recent_scores, !user_recent_scores || (user_recent_scores.length <= 10 && validate(user_recent_scores, "Score")))) okay = false
-
-	const replay = await attempt(api.getReplay, osu.Gamemodes.OSU, {score_id: 2177560145})
-	if (!isOk(replay, !replay || (replay.content.length > 1000 && validate(replay, "Replay")))) okay = false
-
-	return okay
-}
-
-const testAdjustBeatmapStatsToMods = async (): Promise<boolean> => {
-	let okay = true
-	console.log("\n===> ADJUST BEATMAP STATS TO MODS")
-
-	console.log("Requesting a Beatmap once in order to change its stats with mods...")
-	const beatmap = await attempt(api.getBeatmap, {beatmap_id: 2592029}, [osu.Mods.NOFAIL])
-	if (!beatmap) {return false}
-	
-	// Expected AR is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate#table-comparison
-	// Expected OD is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty#osu!
-	const dtnc = [osu.Mods.DOUBLETIME, osu.Mods.NIGHTCORE]
-	for (let i=0;i<dtnc.length;i++) {if (!checkBeatmapWithMods(beatmap, [dtnc[i]], {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})) {okay=false}}
-	for (let i=0;i<dtnc.length;i++) {if (!checkBeatmapWithMods(beatmap, [dtnc[i], osu.Mods.EASY], {bpm: 294, cs: 1.5, ar: 6.87, od: 6.44, hp: 2})) {okay=false}}
-	for (let i=0;i<dtnc.length;i++) {if (!checkBeatmapWithMods(beatmap, [dtnc[i], osu.Mods.HARDROCK], {bpm: 294, cs: 3.9, ar: 10.87, od: 10.04, hp: 5.6})) {okay=false}}
-	if (!checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME], {bpm: 147, cs: 3, ar: 5, od: 3.56, hp: 4})) {okay = false}
-	if (!checkBeatmapWithMods(beatmap, [osu.Mods.EASY], {bpm: 196, cs: 1.5, ar: 3.5, od: 3, hp: 2})) {okay = false}
-	if (!checkBeatmapWithMods(beatmap, [osu.Mods.HARDROCK], {bpm: 196, cs: 3.9, ar: 9.8, od: 8.4, hp: 5.6})) {okay = false}
-	if (!checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME, osu.Mods.EASY], {bpm: 147, cs: 1.5, ar: -0.33, od: -0.44, hp: 2})) {okay = false}
-	if (!checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME, osu.Mods.HARDROCK], {bpm: 147, cs: 3.9, ar: 8.73, od: 6.76, hp: 5.6})) {okay = false}
-
-	const mods: osu.Mods[] = Object.entries(osu.Mods)
-		.filter(([_key, value]) => typeof value === "string")
-		.map(([key, _value]) => Number(key))
-	for (let i = 0; i < mods.length; i++) {
-		const mod = mods[i]
-		// The solution used in getBeatmap() is to simply remove the unsupported mod(s) from the request
-		// So if we were to request a beatmap with such a mod here, we'd be requesting it with NM instead
-		// I honestly just don't wanna make the same request in a row ~15 times :skull:
-		if (osu.Mods.unsupported.includes(mod)) {
-			if (osu.Mods.unsupported[0] !== mod) {
-				console.log("The following mod will not be requested as it'd be pointless:", osu.Mods[mod])
-				continue
-			}
-			// Still make one request to check if it's filtering at all
-			console.log("Checking if it is using the Mods.unsupported filter as it should with the mod", osu.Mods[mod])
-		}
-
-		console.log(`Requesting the SR of the Beatmap with mod ${osu.Mods[mod]}...`)
-		const modded_beatmap = await attempt(api.getBeatmap, beatmap, [mod])
-		if (!modded_beatmap) {return false}
-		if (modded_beatmap.difficultyrating === 0) {
-			console.error(`❌ Beatmaps with the mod ${osu.Mods[mod]} have a difficultyrating of 0!`)
-			return false
-		}
-	}
-
-	console.log("Final request just in case to check if it handles multiple mods...")
-	const multiple_mods_beatmap = await attempt(api.getBeatmap, beatmap, [osu.Mods.HALFTIME, osu.Mods.HARDROCK, osu.Mods.NOFAIL])
-	if (!multiple_mods_beatmap || multiple_mods_beatmap.difficultyrating === 0) {
-		console.error(`❌ Beatmaps with multiple mods have a difficultyrating of 0!`)
+const getUser = async(): Promise<boolean> => {
+	try {
+		const user = await api.getUser(osu.Gamemodes.OSU, {user_id: 2})
+		expect(user.user_id).to.equal(2)
+		expect(validate(user, "User")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
 		return false
 	}
+}
 
-	return okay
+const getUserRecentScores = async(): Promise<boolean> => {
+	try {
+		const scores = await api.getUserRecentScores(2, osu.Gamemodes.CTB, {user_id: 4568537})
+		expect(scores).to.have.lengthOf(2)
+
+		for (let i = 0; i < scores.length; i++) {
+			expect(scores[i].user_id).to.equal(4568537)
+		}
+
+		expect(validate(scores, "ScoreWithBeatmapid")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+}
+
+const getUserBestScores = async(): Promise<boolean> => {
+	try {
+		const scores = await api.getUserBestScores(2, osu.Gamemodes.OSU, {user_id: 2})
+		expect(scores).to.have.lengthOf(2)
+
+		for (let i = 0; i < scores.length; i++) {
+			expect(scores[i].user_id).to.equal(2)
+		}
+
+		expect(validate(scores, "ScoreWithBeatmapidReplayavailablePp")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+}
+
+const getBeatmap = async(): Promise<boolean> => {
+	try {
+		const beatmap = await api.getBeatmap({beatmap_id: 892780})
+		expect(beatmap.beatmap_id).to.equal(892780)
+		expect(beatmap.beatmapset_id).to.equal(409164)
+		expect(beatmap.approved).to.equal(osu.Categories.RANKED)
+		expect(beatmap.title).to.equal("FriendZoned")
+		expect(validate(beatmap, "Beatmap")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+}
+
+const getBeatmaps = async(): Promise<boolean> => {
+	try {
+		const beatmaps = await api.getBeatmaps(5, {gamemode: "all"})
+		expect(beatmaps).to.have.lengthOf(5)
+		expect(validate(beatmaps, "Beatmap")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+}
+
+const getBeatmapScores = async(): Promise<boolean> => {
+	try {
+		const scores = await api.getBeatmapScores(5, osu.Gamemodes.OSU, {beatmap_id: 129891}, {user_id: 124493}, [osu.Mods.HIDDEN, osu.Mods.HARDROCK])
+		expect(scores).to.have.lengthOf(1) // only 1 score per user per beatmap... or per beatmap per user? man idk
+		expect(scores[0].user_id).to.equal(124493)
+		expect(validate(scores, "ScoreWithReplayavailablePp")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+}
+
+const getMatch = async(): Promise<boolean> => {
+	try {
+		const match = await api.getMatch(106369699)
+		expect(match.match.match_id).to.equal(106369699)
+		expect(match.match.name).to.equal("IT: (tout le monde) vs (Adéquat feur)")
+		expect(match.games.filter((g) => g.end_time)).to.have.lengthOf(28)
+		expect(validate(match, "Match")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+}
+
+const getReplay = async(): Promise<boolean> => {
+	try {
+		const replay = await api.getReplay(osu.Gamemodes.OSU, {score_id: 2177560145})
+		expect(replay.content).to.have.lengthOf(159224)
+		expect(validate(replay, "Replay")).to.be.true
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
+}
+
+const testBeatmapWithMods = async (): Promise<boolean> => {
+	console.log("\n Now testing the behaviour of Mods.adjustBeatmapStats & getBeatmap() with mods...")
+	try {
+		const beatmap = await api.getBeatmap({beatmap_id: 2592029}, [osu.Mods.NOFAIL])
+		// Expected AR is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Approach_rate#table-comparison
+		// Expected OD is specified on: https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty#osu!
+
+		const dtnc = [osu.Mods.DOUBLETIME, osu.Mods.NIGHTCORE]
+		for (let i = 0; i < dtnc.length; i++) {
+			expect(checkBeatmapWithMods(beatmap, [dtnc[i]], {bpm: 294, cs: 3, ar: 9, od: 8.44, hp: 4})).to.be.true
+			expect(checkBeatmapWithMods(beatmap, [dtnc[i], osu.Mods.EASY], {bpm: 294, cs: 1.5, ar: 6.87, od: 6.44, hp: 2})).to.be.true
+			expect(checkBeatmapWithMods(beatmap, [dtnc[i], osu.Mods.HARDROCK], {bpm: 294, cs: 3.9, ar: 10.87, od: 10.04, hp: 5.6})).to.be.true
+		}
+
+		expect(checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME], {bpm: 147, cs: 3, ar: 5, od: 3.56, hp: 4})).to.be.true
+		expect(checkBeatmapWithMods(beatmap, [osu.Mods.EASY], {bpm: 196, cs: 1.5, ar: 3.5, od: 3, hp: 2})).to.be.true
+		expect(checkBeatmapWithMods(beatmap, [osu.Mods.HARDROCK], {bpm: 196, cs: 3.9, ar: 9.8, od: 8.4, hp: 5.6})).to.be.true
+		expect(checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME, osu.Mods.EASY], {bpm: 147, cs: 1.5, ar: -0.33, od: -0.44, hp: 2})).to.be.true
+		expect(checkBeatmapWithMods(beatmap, [osu.Mods.HALFTIME, osu.Mods.HARDROCK], {bpm: 147, cs: 3.9, ar: 8.73, od: 6.76, hp: 5.6})).to.be.true
+
+		const mods: osu.Mods[] = Object.entries(osu.Mods)
+			.filter(([_key, value]) => typeof value === "string")
+			.map(([key, _value]) => Number(key))
+
+		for (let i = 0; i < mods.length; i++) {
+			const mod = mods[i]
+			const modded_beatmap = await api.getBeatmap(beatmap, [mod])
+			expect(modded_beatmap.difficultyrating).to.not.be.lessThanOrEqual(0)
+		}
+
+		return true
+	} catch(e) {
+		console.error(e)
+		return false
+	}
 }
 
 const test = async (): Promise<void> => {
 	const tests = [
-		testRequests,
-		testAdjustBeatmapStatsToMods,
+		getUser,
+		getUserRecentScores,
+		getUserBestScores,
+		getBeatmap,
+		getBeatmaps,
+		getBeatmapScores,
+		getMatch,
+		getReplay,
+		testBeatmapWithMods,
 	]
 
 	const results: {test_name: string, passed: boolean}[] = []

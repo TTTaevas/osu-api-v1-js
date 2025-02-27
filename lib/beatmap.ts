@@ -102,7 +102,7 @@ export interface Beatmap {
 	count_slider: number
 	count_spinner: number
 	submit_date: Date
-	approved_date: Date
+	approved_date: Date | null
 	last_update: Date
 	/**
 	 * As it's shown on the website (so it's romaji if japanese name)

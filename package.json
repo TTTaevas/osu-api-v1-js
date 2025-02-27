@@ -19,14 +19,24 @@
     "type": "git",
     "url": "https://github.com/TTTaevas/osu-api-v1-js.git"
   },
-  "license": "WTFPL",
+  "homepage": "https://osu-v1.taevas.xyz/",
+  "keywords": [
+    "osu",
+    "api",
+    "osu-api",
+    "v1",
+    "wrapper",
+    "api-wrapper"
+  ],
+  "license": "Unlicense",
   "devDependencies": {
+    "@types/chai": "^5.0.1",
     "@types/node": "^22.13.4",
     "ajv": "^8.17.1",
+    "chai": "^5.2.0",
     "dotenv": "^16.3.1",
     "ts-json-schema-generator": "^2.3.0",
     "typedoc": "^0.27.9",
     "typescript": "^5.7.3"
-  },
-  "dependencies": {}
+  }
 }
