@@ -1,8 +1,8 @@
 # osu-api-v1-js
 
-[**osu-api-v1-js**](https://github.com/TTTaevas/osu-api-v1-js) is a JavaScript & TypeScript package that helps you interact with [osu!api (v1)](https://github.com/ppy/osu-api/wiki).
+[**osu-api-v1-js**](https://github.com/TTTaevas/osu-api-v1-js) is a JavaScript & TypeScript package that helps you interact with the legacy API of osu!, also known as [osu!api (v1)](https://github.com/ppy/osu-api/wiki).
 
-The version 1.0 of the osu!api (which is the one this package interacts with) is old and lack much of the features of [its new counterpart](https://osu.ppy.sh/docs/). **Please consider using that one instead if you intend on doing more than a script!** To that end, I've developed [osu-api-v2-js](https://github.com/TTTaevas/osu-api-v2-js), a feature-packed package you can switch to today.
+The version 1.0 of the osu!api (which is the one this package interacts with) is old and lacks much of the features of [its new counterpart](https://osu.ppy.sh/docs/). **Please consider using that one instead if you intend on doing more than a script!** To that end, I've developed [osu-api-v2-js](https://github.com/TTTaevas/osu-api-v2-js), a feature-packed package you can switch to today.
 
 You can find detailed documentation about osu-api-v1-js on [osu-v1.taevas.xyz](https://osu-v1.taevas.xyz/)!
 

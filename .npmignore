@@ -1,4 +1,5 @@
 .env
+.env.example
 .github
 .gitignore
 lib/
@@ -7,3 +8,4 @@ docs_plugins/
 test.*
 package-lock.json
 tsconfig.json
+CONTRIBUTING.md

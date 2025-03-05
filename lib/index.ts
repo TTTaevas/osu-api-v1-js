@@ -16,16 +16,25 @@ export {getLength, getURL}
  * @param x Anything, but should be a string, an array that contains a string, or an object which has a string
  * @returns x, but with it (or what it contains) now having the correct type
  */
-function correctType(x: any): any {
-	/**
-	 * This package transforms some properties into Booleans when fitting
-	 */
+function correctType(x: any, force_string?: boolean): any {
+	// This package transforms some properties into Booleans when fitting
 	const bools = [
 		"replay_available", // Score
 		"pass", // Match.games
 		"perfect", // Score, Match.games
 		"storyboard", "video", "download_unavailable", "audio_unavailable" // Beatmap
 	]
+
+	// those MUST be strings; turn the server's numbers into strings and keep the server's strings as strings
+	const bannedProperties = [
+		"name", "artist", "artist_unicode", "title", "title_unicode", "tags", "username", "location", "interests", "occupation", "twitter", "discord",
+		"beatmap_version", "version", "display_version", "author", "raw", "bbcode", "message", "creator", "source", "new_user_username", "source_user_username",
+		"previousUsername", "previous_usernames"
+	]
+	if (force_string) {
+		// For example, beatmaps with an artist of `""` have an artist_unicode of `null`, prevent having artist_unicode be `"null"` or `null` and make it `""`
+		return x ? String(x) : ""
+	}
 
 	if (typeof x === "boolean") {
 		return x
@@ -34,16 +43,19 @@ function correctType(x: any): any {
 		if (/[0-9]{2}:[0-9]{2}:[0-9]{2}\+[0-9]{2}:[0-9]{2}$/.test(x)) x = x.substring(0, x.indexOf("+")) + "Z"
 		return new Date(x)
 	} else if (Array.isArray(x)) {
-		return x.map((e) => correctType(e))
+		return x.map((e) => correctType(e, force_string))
 	} else if (!isNaN(x) && x !== "" && !(x instanceof Date)) {
 		return x === null ? null : Number(x)
 	} else if (typeof x === "object" && x !== null) {
-		const k = Object.keys(x)
-		const v = Object.values(x)
-		for (let i = 0; i < k.length; i++) {
-			x[k[i]] = bools.includes(k[i]) ? Boolean(Number(v[i])) : correctType(v[i])
+		const keys = Object.keys(x)
+		const vals = Object.values(x)
+		for (let i = 0; i < keys.length; i++) {
+			x[keys[i]] = bools.includes(keys[i]) ?
+				Boolean(Number(vals[i])) :
+				correctType(vals[i], bannedProperties.some((p) => keys[i] === p))
 		}
 	}
+
 	return x
 }
 
@@ -264,7 +276,7 @@ export class API {
 		}
 
 		const response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`) as Beatmap[]
-		return response.map((b) => Mods.adjustBeatmapStats(correctType(b), mods))
+		return response.map((b) => Mods.adjustBeatmapStats(b, mods))
 	}
 
 	/**

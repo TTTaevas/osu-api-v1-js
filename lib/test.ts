@@ -67,6 +67,10 @@ function fixDate(x: any) {
 	return x
 }
 
+/**
+ * @param obj The thing to check the interface of
+ * @param schemaName The name of the interface the object is supposed to correspond to
+ */
 function validate(obj: unknown, schemaName: string): boolean {
 	try {
 		const schema = fixDate(generator.createSchema(schemaName))
@@ -108,11 +112,11 @@ const getUser = async(): Promise<boolean> => {
 
 const getUserRecentScores = async(): Promise<boolean> => {
 	try {
-		const scores = await api.getUserRecentScores(2, osu.Gamemodes.CTB, {user_id: 4568537})
+		const scores = await api.getUserRecentScores(2, osu.Gamemodes.CTB, {user_id: 2400918})
 		expect(scores).to.have.lengthOf(2)
 
 		for (let i = 0; i < scores.length; i++) {
-			expect(scores[i].user_id).to.equal(4568537)
+			expect(scores[i].user_id).to.equal(2400918)
 		}
 
 		expect(validate(scores, "ScoreWithBeatmapid")).to.be.true
@@ -157,8 +161,8 @@ const getBeatmap = async(): Promise<boolean> => {
 
 const getBeatmaps = async(): Promise<boolean> => {
 	try {
-		const beatmaps = await api.getBeatmaps(5, {gamemode: "all"})
-		expect(beatmaps).to.have.lengthOf(5)
+		const beatmaps = await api.getBeatmaps(75, {gamemode: "all"})
+		expect(beatmaps).to.have.lengthOf(75)
 		expect(validate(beatmaps, "Beatmap")).to.be.true
 		return true
 	} catch(e) {
