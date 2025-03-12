@@ -226,6 +226,7 @@ export class API {
 		let details = gamemode !== undefined ? `&mode=${gamemode}&a=1` : ""
 		details += mods_bits !== null ? `&mods=${mods_bits}` : ""
 		const response = await this.request("get_beatmaps", `b=${beatmap.beatmap_id}${details}`) as Beatmap[]
+		response.forEach((b) => b.max_combo = b.max_combo !== null ? b.max_combo : 0) // turn null max_combo into 0
 		return Mods.adjustBeatmapStats(response[0], mods)
 	}
 
@@ -276,6 +277,7 @@ export class API {
 		}
 
 		const response = await this.request("get_beatmaps", `limit=${limit}${mode}&${convert}${lookup}`) as Beatmap[]
+		response.forEach((b) => b.max_combo = b.max_combo !== null ? b.max_combo : 0) // turn null max_combo into 0
 		return response.map((b) => Mods.adjustBeatmapStats(b, mods))
 	}
 

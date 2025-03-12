@@ -81,13 +81,13 @@ function validate(obj: unknown, schemaName: string): boolean {
 		if (Array.isArray(obj)) {
 			for (let i = 0; i < obj.length; i++) {
 				const result = validator(obj[i])
-				if (validator.errors) console.error(util.inspect(validator.errors, {colors: true, depth: 5}))
+				if (validator.errors) console.error(obj[i], util.inspect(validator.errors, {colors: true, depth: 5}))
 				if (!result) return false
 			}
 			return true
 		} else {
 			const result = validator(obj)
-			if (validator.errors) console.error(util.inspect(validator.errors, {colors: true, depth: 5}))
+			if (validator.errors) console.error(obj, util.inspect(validator.errors, {colors: true, depth: 5}))
 			return result
 		}
 	} catch(err) {

@@ -147,11 +147,11 @@ export interface Beatmap {
 	packs: string | null
 	max_combo: number
 	/**
-	 * Is null if mode is 1 or 3 (taiko or mania)
+	 * Is null if mode is 1 or 3 (taiko or mania) or if beatmap has no objects
 	 */
 	diff_aim: number | null
 	/**
-	 * Is null if mode is 1, 2, or 3 (taiko, ctb, or mania)
+	 * Is null if mode is 1, 2, or 3 (taiko, ctb, or mania) or if beatmap has no objects
 	 */
 	diff_speed: number | null
 	/**
