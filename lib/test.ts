@@ -112,13 +112,9 @@ const getUser = async(): Promise<boolean> => {
 
 const getUserRecentScores = async(): Promise<boolean> => {
 	try {
-		const scores = await api.getUserRecentScores(2, osu.Gamemodes.CTB, {user_id: 2400918})
+		const scores = await api.getUserRecentScores(2, osu.Gamemodes.OSU, {user_id: 5795337})
 		expect(scores).to.have.lengthOf(2)
-
-		for (let i = 0; i < scores.length; i++) {
-			expect(scores[i].user_id).to.equal(2400918)
-		}
-
+		scores.forEach(s => expect(s.user_id).to.equal(5795337))
 		expect(validate(scores, "ScoreWithBeatmapid")).to.be.true
 		return true
 	} catch(e) {
@@ -131,11 +127,7 @@ const getUserBestScores = async(): Promise<boolean> => {
 	try {
 		const scores = await api.getUserBestScores(2, osu.Gamemodes.OSU, {user_id: 2})
 		expect(scores).to.have.lengthOf(2)
-
-		for (let i = 0; i < scores.length; i++) {
-			expect(scores[i].user_id).to.equal(2)
-		}
-
+		scores.forEach(s => expect(s.user_id).to.equal(2))
 		expect(validate(scores, "ScoreWithBeatmapidReplayavailablePp")).to.be.true
 		return true
 	} catch(e) {
@@ -146,11 +138,11 @@ const getUserBestScores = async(): Promise<boolean> => {
 
 const getBeatmap = async(): Promise<boolean> => {
 	try {
-		const beatmap = await api.getBeatmap({beatmap_id: 892780})
-		expect(beatmap.beatmap_id).to.equal(892780)
-		expect(beatmap.beatmapset_id).to.equal(409164)
-		expect(beatmap.approved).to.equal(osu.Categories.RANKED)
-		expect(beatmap.title).to.equal("FriendZoned")
+		const beatmap = await api.getBeatmap({beatmap_id: 399386})
+		expect(beatmap.beatmap_id).to.equal(399386)
+		expect(beatmap.beatmapset_id).to.equal(164000)
+		expect(beatmap.approved).to.equal(osu.Categories.GRAVEYARD)
+		expect(beatmap.title).to.equal("")
 		expect(validate(beatmap, "Beatmap")).to.be.true
 		return true
 	} catch(e) {

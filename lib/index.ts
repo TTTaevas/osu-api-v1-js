@@ -59,9 +59,7 @@ function correctType(x: any, force_string?: boolean): any {
 	return x
 }
 
-/**
- * If the `API` throws an error, it should always be an `APIError`!
- */
+/** If the `API` throws an error, it should always be an `APIError`! */
 export class APIError {
 	message: string
 	server: string
@@ -81,9 +79,7 @@ export class APIError {
 	}
 }
 
-/**
- * Create an object of this class to get started!
- */
+/** Create an object of this class to get started! */
 export class API {
 	key: string
 	verbose: "none" | "errors" | "all"

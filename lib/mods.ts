@@ -15,20 +15,14 @@ export enum Mods {
 	DOUBLETIME     = 64,
 	RELAX          = 128,
 	HALFTIME       = 256,
-	/**
-	 * @remarks From osu!api wiki: Only set along with DoubleTime. i.e: NC only gives 576
-	 */
+	/** @remarks From osu!api wiki: Only set along with DoubleTime. i.e: NC only gives 576 */
 	NIGHTCORE      = 512,
 	FLASHLIGHT     = 1024,
 	AUTOPLAY       = 2048,
 	SPUNOUT        = 4096,
-	/**
-	 * It's called `Relax2` in the osu!api wiki
-	 */
+	/** It's called `Relax2` in the osu!api wiki */
 	AUTOPILOT      = 8192,
-	/**
-	 * @remarks From osu!api wiki: Only set along with SuddenDeath. i.e: PF only gives 16416  
-	 */
+	/** @remarks From osu!api wiki: Only set along with SuddenDeath. i.e: PF only gives 16416 */
 	PERFECT        = 16384,
 	KEY4           = 32768,
 	KEY5           = 65536,
