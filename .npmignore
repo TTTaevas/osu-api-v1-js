@@ -2,6 +2,8 @@
 .env.example
 .github
 .gitignore
+.prettierrc
+.prettierignore
 lib/
 docs/
 docs_plugins/
