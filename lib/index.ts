@@ -87,27 +87,21 @@ function correctType(x: any, force_string?: boolean): any {
   } else if (!isNaN(x) && x !== "" && !(x instanceof Date)) {
     return x === null ? null : Number(x);
   } else if (typeof x === "object" && x !== null) {
-    const keys = Object.keys(x);
-    const vals = Object.values(x);
-    for (let i = 0; i < keys.length; i++) {
-      x[keys[i]] = bools.includes(keys[i])
-        ? Boolean(Number(vals[i]))
+    Object.entries(x).forEach(([key, value]) => {
+      x[key] = bools.includes(key)
+        ? Boolean(Number(value))
         : correctType(
-            vals[i],
-            bannedProperties.some((p) => keys[i] === p),
+            value,
+            bannedProperties.some((p) => key === p),
           );
-    }
+    });
   }
 
   return x;
 }
 
 /** If the `API` throws an error, it should always be an `APIError`! */
-export class APIError {
-  message: string;
-  server: string;
-  endpoint: string;
-  parameters: string;
+export class APIError extends Error {
   /**
    * @param message The reason why things didn't go as expected
    * @param server The server to which the request was sent
@@ -115,15 +109,12 @@ export class APIError {
    * @param parameters The filters that were used to specify what resource was wanted
    */
   constructor(
-    message: string,
-    server: string,
-    endpoint: string,
-    parameters: string,
+    public message: string,
+    public server: string,
+    public endpoint: string,
+    public parameters: string,
   ) {
-    this.message = message;
-    this.server = server;
-    this.endpoint = endpoint;
-    this.parameters = parameters;
+    super();
   }
 }
 
@@ -149,25 +140,25 @@ export class API {
 
   /**
    * Use this instead of `console.log` to log any information
-   * @param is_error Is the information an error?
+   * @param is_error Is the logging happening because of an error?
    * @param to_log Whatever you would put between the parentheses of `console.log()`
    */
-  private log(is_error: boolean, ...to_log: any[]) {
-    if (
-      this.verbose === "all" ||
-      (this.verbose === "errors" && is_error === true)
-    ) {
+  private log(is_error: boolean, ...to_log: any[]): void {
+    if (this.verbose !== "none" && is_error === true) {
+      console.error("osu!api v1 ->", ...to_log);
+    } else if (this.verbose === "all") {
       console.log("osu!api v1 ->", ...to_log);
     }
   }
 
   /**
+   * Make a custom request to the API server!
    * @param endpoint Basically the endpoint, what comes in the URL after `api/`
    * @param parameters The things to specify in the request, such as the beatmap_id when looking for a beatmap
    * @param number_try How many attempts there's been to get the data
    * @returns A Promise with the API's response
    */
-  private async request(
+  public async request(
     endpoint: string,
     parameters: string,
     number_try: number = 1,
@@ -344,9 +335,7 @@ export class API {
       "get_beatmaps",
       `b=${beatmap.beatmap_id}${details}`,
     )) as Beatmap[];
-    response.forEach(
-      (b) => (b.max_combo = b.max_combo !== null ? b.max_combo : 0),
-    ); // turn null max_combo into 0
+    response.forEach((b) => (b.max_combo ??= 0));
     return Mods.adjustBeatmapStats(response[0], mods);
   }
 
@@ -370,7 +359,9 @@ export class API {
         }
       | Beatmap,
     mods: Mods[] = [],
-    set_owner?: { user_id?: number; username?: string } | User,
+    set_owner?:
+      | { user_id?: User["user_id"]; username?: User["username"] }
+      | User,
     since?: Date,
   ): Promise<Beatmap[]> {
     mods = Mods.removeUnsupported(mods);
@@ -407,9 +398,7 @@ export class API {
       "get_beatmaps",
       `limit=${limit}${mode}&${convert}${lookup}`,
     )) as Beatmap[];
-    response.forEach(
-      (b) => (b.max_combo = b.max_combo !== null ? b.max_combo : 0),
-    ); // turn null max_combo into 0
+    response.forEach((b) => (b.max_combo ??= 0));
     return response.map((b) => Mods.adjustBeatmapStats(b, mods));
   }
 
@@ -455,10 +444,9 @@ export class API {
     match.games.forEach((g) => {
       g.mods = Mods.bitsToArray(g.mods as any);
       g.scores.forEach((s) => {
-        s.enabled_mods =
-          s.enabled_mods === null
-            ? null
-            : Mods.bitsToArray(s.enabled_mods as any);
+        if (s.enabled_mods) {
+          s.enabled_mods = Mods.bitsToArray(s.enabled_mods as any);
+        }
       });
     });
     return match;
