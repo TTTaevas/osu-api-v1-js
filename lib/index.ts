@@ -186,6 +186,7 @@ export class API {
 
     if (!response || !response.ok) {
       if (response) {
+        await response.text(); // Consume the response to avoid connection pool exhaustion (must be awaited)
         err = response.statusText;
         if (response.status === 401) {
           this.log(
