@@ -5,9 +5,9 @@
 
 [**osu-api-v1-js**](https://github.com/TTTaevas/osu-api-v1-js) is a JavaScript & TypeScript package that helps you interact with the legacy API of osu!, also known as [osu!api (v1)](https://github.com/ppy/osu-api/wiki).
 
-The version 1.0 of the osu!api (which is the one this package interacts with) is old and lacks much of the features of [its new counterpart](https://osu.ppy.sh/docs/). **Please consider using that one instead if you intend on doing more than a script!** To that end, I've developed [osu-api-v2-js](https://github.com/TTTaevas/osu-api-v2-js), a feature-packed package you can switch to today.
+Much like the API it uses, it is no longer in development, and so I recommend that you instead use [osu-api-v2-js](https://github.com/TTTaevas/osu-api-v2-js), a feature-packed package which uses [the newer API](https://osu.ppy.sh/docs/). Still, osu-api-v1-js is reliable and is unlikely to ever break.
 
-You can find detailed documentation about osu-api-v1-js on [osu-v1.taevas.xyz](https://osu-v1.taevas.xyz/)!
+You can find detailed documentation about osu-api-v1-js on [osu-v1.taevas.xyz](https://osu-v1.taevas.xyz/)! Should that documentation disappear, you may choose to clone this repository and run `npm run docs` to generate that same documentation locally.
 
 ## How to install and get started
 
@@ -136,7 +136,6 @@ await api.getBeatmapScores(
   [osu.Mods.FLASHLIGHT],
 );
 // get an array of `Score`s that represent the best 100 (max) scores on beatmap with id 932936 from user with id 7276846 on the osu! gamemode
-// don't do it IRL
 await api.getBeatmapScores(
   100,
   osu.Gamemodes.OSU,

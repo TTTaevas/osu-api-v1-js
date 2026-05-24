@@ -61,7 +61,7 @@ export interface Beatmap {
   /** The name of the difficulty/beatmap (for example, "Mirash's Insane") */
   version: string;
   /** md5 hash of the beatmap */
-  file_md5: string;
+  file_md5: string | null; // 2026-05-23 beatmap 5683779 by 37586902 had a null file_md5
   /** Circle Size https://osu.ppy.sh/wiki/en/Beatmap/Circle_size */
   diff_size: number;
   /** Overall Difficulty https://osu.ppy.sh/wiki/en/Beatmap/Overall_difficulty */
