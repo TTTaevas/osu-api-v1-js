@@ -365,12 +365,17 @@ export class API {
       | User,
     since?: Date,
   ): Promise<Beatmap[]> {
+    let lookup = gamemode.allow_converts ? "a=1" : "a=0";
+
+    if (gamemode.gamemode !== "all") {
+      lookup += `&m=${gamemode.gamemode}`;
+    }
+
     mods = Mods.removeUnsupported(mods);
     const mods_bits = Mods.arrayToBits(mods);
-
-    const mode = gamemode.gamemode == "all" ? "" : `&m=${gamemode.gamemode}`;
-    const convert = gamemode.allow_converts ? "a=1" : "a=0";
-    let lookup = mods_bits !== null ? `mods=${mods_bits}` : "";
+    if (mods_bits !== null) {
+      lookup += `&mods=${mods_bits}`;
+    }
 
     if (beatmap) {
       if (beatmap.beatmapset_id !== undefined) {
@@ -390,14 +395,15 @@ export class API {
       }
     }
 
+    // NOTE: Hours, minutes and seconds are relevant here, the space is intentional
     if (since) {
       let x = since.toISOString().replace("T", " ");
-      lookup += x.substring(0, x.indexOf("Z") - 4);
+      lookup += `&since=${x.substring(0, x.indexOf("Z") - 4)}`;
     }
 
     const response = (await this.request(
       "get_beatmaps",
-      `limit=${limit}${mode}&${convert}${lookup}`,
+      `limit=${limit}&${lookup}`,
     )) as Beatmap[];
     response.forEach((b) => (b.max_combo ??= 0));
     return response.map((b) => Mods.adjustBeatmapStats(b, mods));
